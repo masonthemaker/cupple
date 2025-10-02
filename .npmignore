@@ -1,0 +1,15 @@
+node_modules
+.cupple
+*.log
+.DS_Store
+tsconfig.json
+src
+*.tsx
+*.ts
+!dist/**/*.js
+!dist/**/*.d.ts
+!setup.js
+test.tsx
+test2.tsx
+howtouseink.md
+

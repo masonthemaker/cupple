@@ -1,0 +1,6 @@
+node_modules
+dist
+.cupple
+*.log
+.DS_Store
+
