@@ -24,8 +24,15 @@
     "markdown",
     "cli",
     "agent",
-    "frontend",
-    "backend"
+    "documentation",
+    "autodoc",
+    "groq",
+    "llm",
+    "agentic",
+    "cursor",
+    "copilot",
+    "code-generation",
+    "developer-tools"
   ],
   "author": "Mason Adams",
   "license": "MIT",
