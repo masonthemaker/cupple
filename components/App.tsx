@@ -24,7 +24,8 @@ import {executeCommand} from '../commands/index.js';
 import type {CommandContext} from '../commands/index.js';
 import {CuppleServer} from '../api/index.js';
 import type {ServerInfo} from '../api/index.js';
-import {generateMarkdownForFile} from '../tools/index.js';
+import {updateMarkdownForFile, AutodocController} from '../tools/index.js';
+import type {FileSystemEvent} from '../utils/fileWatcher.js';
 
 export const App: React.FC = () => {
 	const [query, setQuery] = useState('');
@@ -116,7 +117,53 @@ export const App: React.FC = () => {
 	}, []);
 
 	useEffect(() => {
+		// Don't start watcher until settings are loaded
+		if (!settings) return;
+
+		// Initialize autodoc controller if in auto mode and has API key
+		let autodoc: AutodocController | null = null;
+		let autodocCallback: ((event: FileSystemEvent) => void) | null = null;
+		
+		if (settings.mode === 'auto' && settings.apiKey) {
+			const threshold = settings.autodocThreshold || 40; // Default to medium (40 lines)
+			
+			autodoc = new AutodocController(
+				settings.apiKey,
+				{
+					changeThreshold: threshold,
+					generateOnCreate: false, // Don't generate immediately on create
+					fileExtensions: ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.go'],
+				},
+				async (result) => {
+					// Handle autodoc results - add to history
+					const currentHistory = await loadHistory();
+					const item: HistoryItem = result.success
+						? {
+								message: `🤖 Auto-generated docs for `,
+								color: '#a855f7',
+								filename: basename(result.filePath),
+								timestamp: Date.now(),
+							}
+						: {
+								message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
+								color: '#ef4444',
+								timestamp: Date.now(),
+							};
+					
+					await saveHistory([...currentHistory, item]);
+					setHistory(await loadHistory());
+				}
+			);
+			// Create the callback ONCE
+			autodocCallback = autodoc.createWatcherCallback();
+		}
+
 		const watcher = new FileWatcher(process.cwd(), async event => {
+			// Pass event to autodoc controller if in auto mode
+			if (autodocCallback) {
+				autodocCallback(event);
+			}
+
 			const currentHistory = await loadHistory();
 
 			// For file modifications, check if we already have an entry for this file
@@ -206,7 +253,7 @@ export const App: React.FC = () => {
 		return () => {
 			watcher.stop();
 		};
-	}, []);
+	}, [settings]);
 
 	const handleSubmit = async (value: string) => {
 		const trimmedValue = value.trim();
@@ -471,16 +518,17 @@ export const App: React.FC = () => {
 
 						const generationResults: HistoryItem[] = [];
 
-						// Generate markdown for each selected file
+						// Generate or update markdown for each selected file
 						for (const filePath of files) {
-							const result = await generateMarkdownForFile(
+							const result = await updateMarkdownForFile(
 								filePath,
 								settings!.apiKey!,
 							);
 
 							if (result.success) {
+								const action = result.wasCreated ? 'Generated' : 'Updated';
 								const successItem: HistoryItem = {
-									message: `✓ Generated guide for `,
+									message: `✓ ${action} guide for `,
 									color: '#22c55e',
 									filename: basename(filePath),
 									timestamp: Date.now(),
@@ -488,7 +536,7 @@ export const App: React.FC = () => {
 								generationResults.push(successItem);
 							} else {
 								const errorItem: HistoryItem = {
-									message: `✗ Failed to generate guide for ${basename(filePath)}: ${result.error}`,
+									message: `✗ Failed to update guide for ${basename(filePath)}: ${result.error}`,
 									color: '#ef4444',
 									timestamp: Date.now(),
 								};

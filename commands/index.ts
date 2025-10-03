@@ -6,6 +6,7 @@ export {handleExitCommand} from './exit.js';
 export {handlePairCommand} from './pair.js';
 export {handleUnpairCommand} from './unpair.js';
 export {handleBrowseCommand} from './browse.js';
+export {handleAutoCommand} from './auto.js';
 
 import type {CommandResult, CommandContext} from './types.js';
 import {handleModeCommand} from './mode.js';
@@ -15,6 +16,7 @@ import {handleExitCommand} from './exit.js';
 import {handlePairCommand} from './pair.js';
 import {handleUnpairCommand} from './unpair.js';
 import {handleBrowseCommand} from './browse.js';
+import {handleAutoCommand} from './auto.js';
 
 export const executeCommand = async (
 	command: string,
@@ -44,6 +46,9 @@ export const executeCommand = async (
 
 		case '/browse':
 			return handleBrowseCommand(args, context);
+
+		case '/auto':
+			return handleAutoCommand(args, context);
 
 		default:
 			// Not a command

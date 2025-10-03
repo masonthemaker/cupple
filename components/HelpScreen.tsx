@@ -47,6 +47,7 @@ export const HelpScreen: React.FC<HelpScreenProps> = ({onBack, serverUrl}) => {
 					<Text dimColor> - Show this help menu</Text>
 				</Box>
 
+
 				<Box>
 					<Text color="#f9a8d4" bold>
 						/pair {'<port>'}
@@ -94,6 +95,13 @@ export const HelpScreen: React.FC<HelpScreenProps> = ({onBack, serverUrl}) => {
 						/mode
 					</Text>
 					<Text dimColor> - Switch between auto and selector mode</Text>
+				</Box>
+
+				<Box>
+					<Text color="#f9a8d4" bold>
+						/auto {'<tiny|small|medium|big>'}
+					</Text>
+					<Text dimColor> - Set autodoc threshold (auto mode only)</Text>
 				</Box>
 
 				<Box>

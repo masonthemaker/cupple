@@ -18,6 +18,7 @@ export type PendingPairingRequest = {
 export type CuppleSettings = {
 	mode: 'auto' | 'selector';
 	apiKey?: string;
+	autodocThreshold?: number; // Line change threshold for autodoc (default: 40)
 	pairedInstances?: PairedInstance[];
 	pendingPairingRequest?: PendingPairingRequest | null;
 };

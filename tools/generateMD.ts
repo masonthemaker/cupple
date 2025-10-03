@@ -1,5 +1,5 @@
 import {Groq} from 'groq-sdk';
-import {readFile, writeFile} from 'fs/promises';
+import {readFile, writeFile, mkdir} from 'fs/promises';
 import {basename, dirname, extname, join} from 'path';
 
 export type GenerateMDResult = {
@@ -41,11 +41,18 @@ export const generateMarkdownForFile = async (
 
 		const markdownContent = chatCompletion.choices[0]?.message?.content || '';
 
-
 		// Create output filename: originalname-guide.md
 		const fileNameWithoutExt = basename(filePath, extname(filePath));
 		const outputFileName = `${fileNameWithoutExt}-guide.md`;
-		const outputPath = join(dirname(filePath), outputFileName);
+		
+		// Get the directory and create a docs subdirectory inside it
+		const fileDir = dirname(filePath);
+		const docsDir = join(fileDir, 'docs');
+		
+		// Create docs directory if it doesn't exist
+		await mkdir(docsDir, {recursive: true});
+		
+		const outputPath = join(docsDir, outputFileName);
 		// Write the markdown file
 		await writeFile(outputPath, markdownContent, 'utf-8');
 
