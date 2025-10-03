@@ -199,21 +199,6 @@ Each guide includes:
 - Edge cases and gotchas
 - Implementation notes
 
-## Why AI-Readable Documentation Matters
-
-Traditional documentation is written for humans. But in 2025, your code is read by:
-- **Human developers** (occasionally)
-- **AI coding assistants** (constantly)
-
-AI agents need:
-- ✅ Structured, parseable markdown
-- ✅ Up-to-date implementation details
-- ✅ Type information and signatures
-- ✅ Usage examples and edge cases
-- ✅ Context about related components
-
-Cupple generates exactly this—automatically.
-
 ## API Key
 
 Cupple uses the [Groq API](https://groq.com) with the **GPT OSS 120B** model for blazing-fast, high-quality LLM-powered documentation generation.
@@ -255,6 +240,22 @@ Cupple uses the [Groq API](https://groq.com) with the **GPT OSS 120B** model for
 **Privacy**: Your code is sent to Groq for documentation generation. Groq does not train on your data.
 
 Get your free API key: [console.groq.com](https://console.groq.com/)
+
+## Why AI-Readable Documentation Matters
+
+Traditional documentation is written for humans. But in 2025, your code is read by:
+- **Human developers** (occasionally)
+- **AI coding assistants** (constantly)
+
+AI agents need:
+- ✅ Structured, parseable markdown
+- ✅ Up-to-date implementation details
+- ✅ Type information and signatures
+- ✅ Usage examples and edge cases
+- ✅ Context about related components
+
+Cupple generates exactly this—automatically.
+
 
 ## Use Cases
 
