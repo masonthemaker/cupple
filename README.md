@@ -214,6 +214,17 @@ AI agents need:
 
 Cupple generates exactly this—automatically.
 
+## API Key
+
+Cupple uses the [Groq API](https://groq.com) with the **GPT OSS 120B** model for blazing-fast, high-quality LLM-powered documentation generation.
+
+### Why Groq?
+
+- ⚡ **Ultra-fast**: ~500 tokens/second output (documentation in seconds, not minutes)
+- 💰 **Extremely cheap**: $0.15/M input tokens, $0.75/M output tokens
+- 🆓 **Generous free tier**: 200k tokens/day (1,000 requests/day, 30 requests/minute)
+
+
 ### Pricing Breakdown
 
 **Cost per documentation generation/update:**
@@ -266,17 +277,6 @@ Get your free API key: [console.groq.com](https://console.groq.com/)
 - Automatically maintain contributor documentation
 - Help AI tools generate better PRs
 - Keep README and API docs in sync
-
-## API Key
-
-Cupple uses the [Groq API](https://groq.com) with the **GPT OSS 120B** model for blazing-fast, high-quality LLM-powered documentation generation.
-
-### Why Groq?
-
-- ⚡ **Ultra-fast**: ~500 tokens/second output (documentation in seconds, not minutes)
-- 💰 **Extremely cheap**: $0.15/M input tokens, $0.75/M output tokens
-- 🆓 **Generous free tier**: 200k tokens/day (1,000 requests/day, 30 requests/minute)
-
 
 ## Requirements
 
