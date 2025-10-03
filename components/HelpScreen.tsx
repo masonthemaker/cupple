@@ -40,72 +40,100 @@ export const HelpScreen: React.FC<HelpScreenProps> = ({onBack, serverUrl}) => {
 				borderColor="#f9a8d4"
 				padding={1}
 			>
+				{/* Documentation */}
+				<Box marginBottom={1}>
+					<Text bold color="#22c55e">📚 Documentation</Text>
+				</Box>
+				
 				<Box>
-					<Text color="#f9a8d4" bold>
-						/help
+					<Text color="#22c55e" bold>
+						/select
 					</Text>
-					<Text dimColor> - Show this help menu</Text>
+					<Text dimColor> - Browse & document files (selector mode)</Text>
 				</Box>
 
+				<Box>
+					<Text color="#22c55e" bold>
+						/redoc {'<filepath> [notes]'}
+					</Text>
+					<Text dimColor> - Regenerate docs with custom guidance</Text>
+				</Box>
 
 				<Box>
-					<Text color="#f9a8d4" bold>
+					<Text color="#22c55e" bold>
+						/init
+					</Text>
+					<Text dimColor> - Configure autodoc file types & threshold</Text>
+				</Box>
+
+				<Box>
+					<Text color="#22c55e" bold>
+						/auto {'<tiny|small|medium|big>'}
+					</Text>
+					<Text dimColor> - Set autodoc threshold (auto mode only)</Text>
+				</Box>
+
+				{/* Pairing */}
+				<Box marginTop={1} marginBottom={1}>
+					<Text bold color="#3b82f6">🔗 Pairing</Text>
+				</Box>
+
+				<Box>
+					<Text color="#3b82f6" bold>
 						/pair {'<port>'}
 					</Text>
 					<Text dimColor> - Connect to another Cupple instance</Text>
 				</Box>
 
 				<Box>
-					<Text color="#f9a8d4" bold>
+					<Text color="#3b82f6" bold>
 						/unpair {'<port|all>'}
 					</Text>
 					<Text dimColor> - Disconnect from one or all paired instances</Text>
 				</Box>
 
 				<Box>
-					<Text color="#f9a8d4" bold>
+					<Text color="#3b82f6" bold>
 						/browse {'<port>'}
 					</Text>
 					<Text dimColor> - Browse files on a paired instance</Text>
 				</Box>
 
-				<Box>
-					<Text color="#f9a8d4" bold>
-						/select
-					</Text>
-					<Text dimColor> - Open file selector (selector mode only)</Text>
+				{/* General */}
+				<Box marginTop={1} marginBottom={1}>
+					<Text bold color="#f59e0b">⚙️  General</Text>
 				</Box>
 
 				<Box>
-					<Text color="#f9a8d4" bold>
-						/status
-					</Text>
-					<Text dimColor> - Check server and file watcher status</Text>
-				</Box>
-
-				<Box>
-					<Text color="#f9a8d4" bold>
-						/clear
-					</Text>
-					<Text dimColor> - Clear the history</Text>
-				</Box>
-
-				<Box>
-					<Text color="#f9a8d4" bold>
+					<Text color="#f59e0b" bold>
 						/mode
 					</Text>
 					<Text dimColor> - Switch between auto and selector mode</Text>
 				</Box>
 
 				<Box>
-					<Text color="#f9a8d4" bold>
-						/auto {'<tiny|small|medium|big>'}
+					<Text color="#f59e0b" bold>
+						/status
 					</Text>
-					<Text dimColor> - Set autodoc threshold (auto mode only)</Text>
+					<Text dimColor> - Check server and file watcher status</Text>
 				</Box>
 
 				<Box>
-					<Text color="#f9a8d4" bold>
+					<Text color="#f59e0b" bold>
+						/clear
+					</Text>
+					<Text dimColor> - Clear the history</Text>
+				</Box>
+
+				<Box>
+					<Text color="#f59e0b" bold>
+						/help
+					</Text>
+					<Text dimColor> - Show this help menu</Text>
+				</Box>
+
+				<Box>
+					<Text color="#f59e0b" bold>
 						/exit
 					</Text>
 					<Text dimColor> - Exit Cupple</Text>
@@ -126,4 +154,3 @@ export const HelpScreen: React.FC<HelpScreenProps> = ({onBack, serverUrl}) => {
 		</Box>
 	);
 };
-

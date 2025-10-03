@@ -1,6 +1,6 @@
 # `StatusIndicator.tsx` – Documentation  
 
-A reusable **Ink** component (and related helpers) for displaying status messages in terminal‑based React applications. It supports multiple status types, size variants, optional icons, borders, and a hook for managing status state.
+A reusable **Ink** component (and related helpers) for displaying status messages in terminal‑based React applications. It now supports full visual rendering for all declared status types, optional timestamps, animated icons, badges, and action text.
 
 ---  
 
@@ -10,24 +10,24 @@ A reusable **Ink** component (and related helpers) for displaying status message
 2. [File Structure Overview](#file-structure-overview)  
 3. [Type Definitions](#type-definitions)  
 4. [Configuration Objects](#configuration-objects)  
-5. [Core Component](#core-component)  
+5. [Core Component – `StatusIndicator`](#core-component---statusindicator)  
 6. [Convenience Components](#convenience-components)  
-7. [Hook: `useStatusMessage`](#hook-useStatusMessage)  
+7. [Hook – `useStatusMessage`](#hook--usestatusmessage)  
 8. [Usage Examples](#usage-examples)  
-9. [Important Details & Gotchas](#important-details--gotchas)  
-10. [Export Summary](#export-summary)  
+9. [Export Summary](#export-summary)  
 
 ---  
 
 ## Purpose  
 
-`StatusIndicator` provides a **consistent, styled way** to render status feedback (success, error, warning, info, loading) in an Ink‑based CLI UI.  
+`StatusIndicator` provides a **consistent, styled way** to render status feedback in an Ink‑based CLI UI.
 
-* **Icon + colour** per status type.  
-* **Size variants** (`small`, `medium`, `large`) that affect padding and text weight.  
-* Optional **border** with the status colour.  
-* Helper components (`SuccessStatus`, `ErrorStatus`, …) for brevity.  
-* A **React hook** (`useStatusMessage`) that centralises status handling (show/clear) for any component.  
+* Icon + colour per status type.  
+* Size variants (`small`, `medium`, `large`) that affect padding and text weight.  
+* Optional coloured border.  
+* **Live timestamp**, **badge**, **action text**, and **animated icons** are now functional.  
+* Convenience wrappers (`SuccessStatus`, `ErrorStatus`, …) for brevity.  
+* A small hook (`useStatusMessage`) for managing status state.  
 
 ---  
 
@@ -37,10 +37,11 @@ A reusable **Ink** component (and related helpers) for displaying status message
 |--------|-------------------|
 | **Imports** | React, Ink’s `Box` & `Text`. |
 | **Type definitions** | `StatusType`, `StatusSize`, `StatusIndicatorProps`. |
-| **Constant configs** | `STATUS_CONFIG` (icon, colour, label) and `SIZE_CONFIG` (padding, margin). |
-| **`StatusIndicator` component** | Main UI rendering logic. |
-| **Convenience wrappers** | `SuccessStatus`, `ErrorStatus`, `WarningStatus`, `InfoStatus`, `LoadingStatus`. |
-| **`useStatusMessage` hook** | Stateful helper for showing/hiding status messages. |
+| **Constant configs** | `STATUS_CONFIG` (icon, colour, label, animatable) and `SIZE_CONFIG` (padding, margin). |
+| **Animation frames** | `ANIMATION_FRAMES` – used for animatable statuses. |
+| **`StatusIndicator` component** | UI rendering logic with optional timestamp, badge, action text, and animation. |
+| **Convenience wrappers** | `SuccessStatus`, `ErrorStatus`, `WarningStatus`, `InfoStatus`, `LoadingStatus`, `ProcessingStatus`, `PendingStatus`. |
+| **`useStatusMessage` hook** | Helper for showing/clearing status messages. |
 | **Exports** | All components, types, and the hook. |
 
 ---  
@@ -49,7 +50,14 @@ A reusable **Ink** component (and related helpers) for displaying status message
 
 ```ts
 /** All supported status categories */
-export type StatusType = 'success' | 'error' | 'warning' | 'info' | 'loading';
+export type StatusType =
+  | 'success'
+  | 'error'
+  | 'warning'
+  | 'info'
+  | 'loading'
+  | 'processing'
+  | 'pending';
 
 /** Visual size variants */
 export type StatusSize = 'small' | 'medium' | 'large';
@@ -58,18 +66,37 @@ export type StatusSize = 'small' | 'medium' | 'large';
 export interface StatusIndicatorProps {
   /** The type of status to display */
   status: StatusType;
-  /** Main status message (bold by default) */
+
+  /** Main status message */
   message: string;
+
   /** Optional detailed information shown underneath */
   details?: string;
-  /** Show the status icon (defaults to true) */
+
+  /** Whether to show the status icon (default `true`) */
   showIcon?: boolean;
-  /** Size variant (defaults to 'medium') */
+
+  /** Size variant (default `'medium'`) */
   size?: StatusSize;
-  /** Render a coloured border around the whole indicator (defaults to false) */
+
+  /** Render a coloured border around the whole indicator (default `false`) */
   bordered?: boolean;
+
+  /** Show a timestamp when the status was created (default `false`) */
+  showTimestamp?: boolean;
+
+  /** Enable animation for animatable statuses (default `false`) */
+  animated?: boolean;
+
+  /** Optional action text (e.g., “Press Enter to retry”) */
+  actionText?: string;
+
+  /** Optional badge text displayed next to the message */
+  badge?: string;
 }
 ```
+
+> **All props are fully functional** – `showTimestamp`, `animated`, `actionText`, and `badge` now affect the rendered output.
 
 ---  
 
@@ -77,22 +104,42 @@ export interface StatusIndicatorProps {
 
 ### `STATUS_CONFIG`
 
-Maps each `StatusType` to:
+Maps every **implemented** `StatusType` to an icon, colour, label, and a flag indicating whether the status can be animated.
 
-| Property | Meaning |
-|----------|---------|
-| `icon`   | Unicode glyph shown before the message. |
-| `color`  | Hex colour used for the icon, message text, and optional border. |
-| `label`  | Human‑readable label (currently unused but handy for extensions). |
+| Status      | Icon | Colour | Animatable |
+|------------|------|--------|------------|
+| `success`   | ✓    | `#22c55e` | false |
+| `error`     | ✗    | `#ef4444` | false |
+| `warning`   | ⚠    | `#f59e0b` | false |
+| `info`      | ℹ    | `#3b82f6` | false |
+| `loading`   | ⏳   | `#a855f7` | true |
+| `processing`| ⚙   | `#8b5cf6` | true |
+| `pending`   | ⋯   | `#64748b` | true |
 
 ```ts
-const STATUS_CONFIG: Record<StatusType, {icon: string; color: string; label: string}> = {
-  success: {icon: '✓', color: '#22c55e', label: 'Success'},
-  error:   {icon: '✗', color: '#ef4444', label: 'Error'},
-  warning: {icon: '⚠', color: '#f59e0b', label: 'Warning'},
-  info:    {icon: 'ℹ', color: '#3b82f6', label: 'Info'},
-  loading: {icon: '⏳', color: '#a855f7', label: 'Loading'},
+const STATUS_CONFIG: Record<
+  StatusType,
+  { icon: string; color: string; label: string; animatable: boolean }
+> = {
+  success: { icon: '✓', color: '#22c55e', label: 'Success', animatable: false },
+  error: { icon: '✗', color: '#ef4444', label: 'Error', animatable: false },
+  warning: { icon: '⚠', color: '#f59e0b', label: 'Warning', animatable: false },
+  info: { icon: 'ℹ', color: '#3b82f6', label: 'Info', animatable: false },
+  loading: { icon: '⏳', color: '#a855f7', label: 'Loading', animatable: true },
+  processing: { icon: '⚙', color: '#8b5cf6', label: 'Processing', animatable: true },
+  pending: { icon: '⋯', color: '#64748b', label: 'Pending', animatable: true },
 };
+```
+
+### `ANIMATION_FRAMES`
+
+Frames used when a status is both **animated** (`animated=true`) **and** `animatable`.
+
+```ts
+const ANIMATION_FRAMES = [
+  '⠋', '⠙', '⠹', '⠸', '⠼',
+  '⠴', '⠦', '⠧', '⠇', '⠏',
+];
 ```
 
 ### `SIZE_CONFIG`
@@ -100,10 +147,10 @@ const STATUS_CONFIG: Record<StatusType, {icon: string; color: string; label: str
 Controls vertical spacing for each size variant.
 
 ```ts
-const SIZE_CONFIG: Record<StatusSize, {padding: number; marginY: number}> = {
-  small:  {padding: 0, marginY: 0},
-  medium: {padding: 1, marginY: 1},
-  large:  {padding: 2, marginY: 1},
+const SIZE_CONFIG: Record<StatusSize, { padding: number; marginY: number }> = {
+  small: { padding: 0, marginY: 0 },
+  medium: { padding: 1, marginY: 1 },
+  large: { padding: 2, marginY: 1 },
 };
 ```
 
@@ -119,38 +166,49 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({
   showIcon = true,
   size = 'medium',
   bordered = false,
+  showTimestamp = false,
+  animated = false,
+  actionText,
+  badge,
 }) => { … }
 ```
 
 ### Rendering Logic  
 
-1. **Select config** – `STATUS_CONFIG[status]` provides colour & icon.  
-2. **Select size config** – `SIZE_CONFIG[size]` provides padding & margin.  
-3. **Outer `<Box>`**  
-   * `flexDirection="column"` – stacks the main line and optional details.  
-   * `marginY` & `padding` derived from size & `bordered`.  
-   * If `bordered`, `borderStyle="round"` and `borderColor` use the status colour.  
-4. **First line** – icon (if `showIcon`) + primary message.  
-   * Message is bold when `size === 'large'`.  
-5. **Details line** – rendered only when `details` is provided.  
-   * Indented (`marginLeft`) if the icon is present.  
-   * Uses `dimColor` to de‑emphasise the extra text.
+1. **Configuration lookup** – `STATUS_CONFIG[status]` supplies colour, icon, label, and `animatable`.  
+2. **Size lookup** – `SIZE_CONFIG[size]` supplies `padding` & `marginY`.  
+3. **Animation** – If `animated && config.animatable`, the icon cycles through `ANIMATION_FRAMES`.  
+4. **Outer `<Box>`**  
+   * `flexDirection="column"` stacks the main line and any optional lines.  
+   * `marginY` and optional `padding` (when `bordered`) come from the size config.  
+   * When `bordered` is true, `borderStyle="round"` and `borderColor` use the status colour.  
+5. **First line** –  
+   * Optional icon (animated or static) rendered in the status colour and bold.  
+   * Message rendered in the status colour; bold when `size === 'large'`.  
+   * Optional **badge** displayed dim‑colored inside brackets.  
+   * Optional **timestamp** displayed dim‑colored after a bullet.  
+6. **Details line** – rendered only when `details` is provided; indented when the icon is shown and padded according to the size config.  
+7. **Action text line** – rendered only when `actionText` is provided; italic and dim‑colored, indented like the details line.  
+
+> **Default prop values** – `showIcon: true`, `size: 'medium'`, `bordered: false`, `showTimestamp: false`, `animated: false`.
 
 ---  
 
 ## Convenience Components  
 
-These are thin wrappers that preset the `status` prop, letting you write less code.
+Thin wrappers that preset the `status` prop, reducing boilerplate.
 
-| Component | Usage | Underlying component |
-|-----------|-------|----------------------|
-| `SuccessStatus` | `<SuccessStatus message="All good!" />` | `<StatusIndicator status="success" … />` |
-| `ErrorStatus`   | `<ErrorStatus message="Oops!" />`   | `<StatusIndicator status="error" … />` |
-| `WarningStatus` | `<WarningStatus … />`               | `<StatusIndicator status="warning" … />` |
-| `InfoStatus`    | `<InfoStatus … />`                  | `<StatusIndicator status="info" … />` |
-| `LoadingStatus` | `<LoadingStatus … />`               | `<StatusIndicator status="loading" … />` |
+| Component | Underlying component |
+|-----------|----------------------|
+| `SuccessStatus` | `<StatusIndicator status="success" … />` |
+| `ErrorStatus`   | `<StatusIndicator status="error" … />` |
+| `WarningStatus` | `<StatusIndicator status="warning" … />` |
+| `InfoStatus`    | `<StatusIndicator status="info" … />` |
+| `LoadingStatus` | `<StatusIndicator status="loading" … />` |
+| `ProcessingStatus` | `<StatusIndicator status="processing" … />` |
+| `PendingStatus` | `<StatusIndicator status="pending" … />` |
 
-All accept the same props as `StatusIndicator` **except** `status` (which is omitted via `Omit<…, 'status'>`).
+All accept the same props as `StatusIndicator` **except** `status` (omitted via `Omit<…, 'status'>`).
 
 ---  
 
@@ -187,49 +245,15 @@ export const useStatusMessage = () => {
 };
 ```
 
-**Typical usage pattern**
-
-```tsx
-const MyComponent = () => {
-  const {
-    currentStatus,
-    showSuccess,
-    showError,
-    clearStatus,
-  } = useStatusMessage();
-
-  // Example: trigger a success after async work
-  React.useEffect(() => {
-    asyncTask()
-      .then(() => showSuccess('Task finished'))
-      .catch(err => showError('Task failed', err.message));
-  }, []);
-
-  return (
-    <>
-      {/* Render the status if one exists */}
-      {currentStatus && (
-        <StatusIndicator
-          status={currentStatus.type}
-          message={currentStatus.message}
-          details={currentStatus.details}
-          bordered
-        />
-      )}
-      {/* Rest of UI … */}
-    </>
-  );
-};
-```
+> The hook currently provides helpers for the five core statuses; `processing` and `pending` can still be set manually via `setCurrentStatus` if needed.
 
 ---  
 
 ## Usage Examples  
 
-### 1. Basic inline usage  
+### 1. Basic inline usage (large, bordered)
 
 ```tsx
-import React from 'react';
 import { render } from 'ink';
 import { StatusIndicator } from './StatusIndicator';
 
@@ -244,7 +268,7 @@ render(
 );
 ```
 
-### 2. Using a convenience component  
+### 2. Convenience component with badge and hidden icon
 
 ```tsx
 import { ErrorStatus } from './StatusIndicator';
@@ -253,27 +277,44 @@ render(
   <ErrorStatus
     message="Failed to connect"
     details="Check your network settings."
-    size="medium"
+    badge="RETRY"
     showIcon={false}
   />
 );
 ```
 
-### 3. Switching size & border options  
+### 3. Animated loading with timestamp
 
 ```tsx
-<StatusIndicator
-  status="warning"
-  message="Low disk space"
-  size="small"
-  bordered={false}
-/>
+import { LoadingStatus } from './StatusIndicator';
+
+render(
+  <LoadingStatus
+    message="Fetching data..."
+    animated
+    showTimestamp
+    size="medium"
+  />
+);
 ```
 
-### 4. Managing status with the hook  
+### 4. Processing status with action text
 
 ```tsx
-import React from 'react';
+import { ProcessingStatus } from './StatusIndicator';
+
+render(
+  <ProcessingStatus
+    message="Building project"
+    actionText="Press <Ctrl‑C> to cancel"
+    bordered
+  />
+);
+```
+
+### 5. Managing status with the hook
+
+```tsx
 import { render, Box } from 'ink';
 import { useStatusMessage, StatusIndicator } from './StatusIndicator';
 
@@ -287,10 +328,11 @@ const Demo = () => {
 
   React.useEffect(() => {
     showLoading('Fetching data...');
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       showSuccess('Data loaded', 'Fetched 42 records');
       setTimeout(clearStatus, 3000);
     }, 2000);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -312,35 +354,22 @@ render(<Demo />);
 
 ---  
 
-## Important Details & Gotchas  
-
-| Topic | Details |
-|-------|---------|
-| **Ink version** | The component relies on Ink’s `Box` and `Text`. Ensure you have a compatible Ink version (≥3.0). |
-| **Colour support** | The colour strings are hex values; terminals that don’t support true‑color will fall back to the nearest ANSI colour. |
-| **Icon width** | Unicode icons have varying column widths on some terminals; the layout assumes a single‑character width. |
-| **Border rendering** | `borderStyle="round"` only works when `bordered={true}`. The border colour matches the status colour, providing a visual cue. |
-| **`size` impact** | `size="large"` makes the primary message bold; `size="small"` removes extra padding. Adjust as needed for dense logs. |
-| **Extensibility** | Adding a new status type requires extending `StatusType`, updating `STATUS_CONFIG`, and (optionally) creating a convenience wrapper. |
-| **Hook concurrency** | The hook stores a single status at a time. If you need multiple concurrent messages, manage an array of statuses yourself. |
-| **SSR / non‑Ink environments** | This file is intended for Ink (Node CLI) only; it will not render in a browser environment. |
-
----  
-
 ## Export Summary  
 
 | Export | Type |
 |--------|------|
-| `StatusType` | Type alias (`'success' | 'error' | ...`) |
-| `StatusSize` | Type alias (`'small' | 'medium' | 'large'`) |
-| `StatusIndicatorProps` | Interface |
+| `StatusType` | `'success' | 'error' | 'warning' | 'info' | 'loading' | 'processing' | 'pending'` |
+| `StatusSize` | `'small' | 'medium' | 'large'` |
+| `StatusIndicatorProps` | Interface (includes functional `showTimestamp`, `animated`, `actionText`, `badge`) |
 | `StatusIndicator` | `React.FC<StatusIndicatorProps>` – core component |
 | `SuccessStatus` | `React.FC<Omit<StatusIndicatorProps, 'status'>>` |
 | `ErrorStatus` | same as above |
 | `WarningStatus` | same as above |
 | `InfoStatus` | same as above |
 | `LoadingStatus` | same as above |
-| `useStatusMessage` | Custom hook returning `{ currentStatus, showSuccess, …, clearStatus }` |
+| `ProcessingStatus` | same as above |
+| `PendingStatus` | same as above |
+| `useStatusMessage` | Hook returning `{ currentStatus, showSuccess, showError, showWarning, showInfo, showLoading, clearStatus }` |
 
 ---  
 

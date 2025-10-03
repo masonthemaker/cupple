@@ -15,10 +15,20 @@ export type PendingPairingRequest = {
 	requestedAt: number;
 };
 
+export type DocDetailLevel = 'brief' | 'standard' | 'comprehensive';
+
+export type ExtensionConfig = {
+	extension: string;
+	detailLevel: DocDetailLevel;
+};
+
 export type CuppleSettings = {
 	mode: 'auto' | 'selector';
 	apiKey?: string;
 	autodocThreshold?: number; // Line change threshold for autodoc (default: 40)
+	autodocExtensions?: string[]; // DEPRECATED: Use extensionConfigs instead
+	docDetailLevel?: DocDetailLevel; // DEPRECATED: Use extensionConfigs instead
+	extensionConfigs?: ExtensionConfig[]; // Per-extension documentation configurations
 	pairedInstances?: PairedInstance[];
 	pendingPairingRequest?: PendingPairingRequest | null;
 };

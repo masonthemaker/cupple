@@ -8,9 +8,27 @@ export type GenerateMDResult = {
 	error?: string;
 };
 
+type DocDetailLevel = 'brief' | 'standard' | 'comprehensive';
+
+const getSystemPrompt = (detailLevel: DocDetailLevel): string => {
+	const basePrompt = 'You are an expert software documentation generator that only outputs in markdown.';
+	
+	if (detailLevel === 'brief') {
+		return `${basePrompt} Generate CONCISE documentation. Include:\n- Brief purpose (1-2 sentences)\n- Key types/interfaces with minimal descriptions\n- Main props/parameters (only required ones)\n- One basic usage example\n- Keep it short and scannable. Focus on essentials only.`;
+	}
+	
+	if (detailLevel === 'comprehensive') {
+		return `${basePrompt} Generate COMPREHENSIVE documentation. Include:\n- Detailed purpose and context\n- Complete structure breakdown\n- All types, interfaces, props with full descriptions\n- Multiple usage examples (basic, intermediate, advanced)\n- Edge cases and gotchas\n- Best practices and recommendations\n- Implementation details and reasoning\n- Related components/files`;
+	}
+	
+	// Standard (default)
+	return `${basePrompt} Generate BALANCED documentation. Include:\n- Clear purpose statement\n- Key structure and components\n- Important types/props with descriptions\n- Practical usage examples\n- Notable gotchas or edge cases\n- Keep it informative but not overwhelming.`;
+};
+
 export const generateMarkdownForFile = async (
 	filePath: string,
 	apiKey: string,
+	detailLevel: DocDetailLevel = 'standard',
 ): Promise<GenerateMDResult> => {
 	try {
 		// Read the file content
@@ -25,8 +43,7 @@ export const generateMarkdownForFile = async (
 			messages: [
 				{
 					role: 'system',
-					content:
-						'You are an expert software documentation generator that only outputs in markdown. Take the file you\'re given and document it in markdown. Include: purpose, structure, key functions/components, usage examples, and any important details.',
+					content: getSystemPrompt(detailLevel),
 				},
 				{
 					role: 'user',

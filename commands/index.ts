@@ -7,6 +7,8 @@ export {handlePairCommand} from './pair.js';
 export {handleUnpairCommand} from './unpair.js';
 export {handleBrowseCommand} from './browse.js';
 export {handleAutoCommand} from './auto.js';
+export {handleInitCommand, InitScreen} from './init.js';
+export {handleRedocCommand} from './redoc.js';
 
 import type {CommandResult, CommandContext} from './types.js';
 import {handleModeCommand} from './mode.js';
@@ -17,6 +19,8 @@ import {handlePairCommand} from './pair.js';
 import {handleUnpairCommand} from './unpair.js';
 import {handleBrowseCommand} from './browse.js';
 import {handleAutoCommand} from './auto.js';
+import {handleInitCommand} from './init.js';
+import {handleRedocCommand} from './redoc.js';
 
 export const executeCommand = async (
 	command: string,
@@ -50,9 +54,15 @@ export const executeCommand = async (
 		case '/auto':
 			return handleAutoCommand(args, context);
 
-		default:
-			// Not a command
-			return null;
+	case '/init':
+		return handleInitCommand(context);
+
+	case '/redoc':
+		return handleRedocCommand(context, args);
+
+	default:
+		// Not a command
+		return null;
 	}
 };
 

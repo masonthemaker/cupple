@@ -20,7 +20,7 @@ import {
 	saveHistory,
 } from '../utils/index.js';
 import type {CuppleSettings, HistoryItem} from '../utils/index.js';
-import {executeCommand} from '../commands/index.js';
+import {executeCommand, InitScreen} from '../commands/index.js';
 import type {CommandContext} from '../commands/index.js';
 import {CuppleServer} from '../api/index.js';
 import type {ServerInfo} from '../api/index.js';
@@ -35,6 +35,7 @@ export const App: React.FC = () => {
 	const [serverInfo, setServerInfo] = useState<ServerInfo | null>(null);
 	const [showHelp, setShowHelp] = useState(false);
 	const [showFileSelector, setShowFileSelector] = useState(false);
+	const [showInit, setShowInit] = useState(false);
 	const [browsePairedPort, setBrowsePairedPort] = useState<number | null>(null);
 	const [pushToPairedPort, setPushToPairedPort] = useState<number | null>(null);
 
@@ -127,12 +128,19 @@ export const App: React.FC = () => {
 		if (settings.mode === 'auto' && settings.apiKey) {
 			const threshold = settings.autodocThreshold || 40; // Default to medium (40 lines)
 			
+			// Use new extensionConfigs if available, otherwise fallback to old format
+			const extensionConfigs = settings.extensionConfigs || 
+				(settings.autodocExtensions || ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.go']).map(ext => ({
+					extension: ext,
+					detailLevel: settings.docDetailLevel || 'standard',
+				}));
+			
 			autodoc = new AutodocController(
 				settings.apiKey,
 				{
 					changeThreshold: threshold,
 					generateOnCreate: false, // Don't generate immediately on create
-					fileExtensions: ['.ts', '.tsx', '.js', '.jsx', '.py', '.java', '.go'],
+					extensionConfigs,
 				},
 				async (result) => {
 					// Handle autodoc results - add to history
@@ -268,10 +276,26 @@ export const App: React.FC = () => {
 		}
 
 		// Handle /select command for selector mode
-		if (trimmedValue === '/select' && settings?.mode === 'selector') {
-			setShowFileSelector(true);
-			setQuery('');
-			return;
+		if (trimmedValue === '/select') {
+			if (settings?.mode === 'selector') {
+				setShowFileSelector(true);
+				setQuery('');
+				return;
+			} else if (settings?.mode === 'auto') {
+				// User tried to use /select in auto mode
+				const currentHistory = await loadHistory();
+				await saveHistory([
+					...currentHistory,
+					{
+						message: '⚠ /select is only available in selector mode. Use /mode to switch modes.',
+						color: '#f59e0b',
+						timestamp: Date.now(),
+					},
+				]);
+				setHistory(await loadHistory());
+				setQuery('');
+				return;
+			}
 		}
 
 		// Check if it's a command
@@ -305,6 +329,13 @@ export const App: React.FC = () => {
 			if (result.message.startsWith('browse:')) {
 				const port = parseInt(result.message.split(':')[1], 10);
 				setBrowsePairedPort(port);
+				setQuery('');
+				return;
+			}
+
+			// Special handling for /init - show init screen
+			if (result.message === 'init:show') {
+				setShowInit(true);
 				setQuery('');
 				return;
 			}
@@ -363,6 +394,53 @@ export const App: React.FC = () => {
 				onBack={() => setShowHelp(false)}
 				serverUrl={serverInfo?.url}
 			/>
+		);
+	}
+
+	// Show init screen
+	if (showInit) {
+		const context: CommandContext = {
+			settings: settings!,
+			serverInfo: serverInfo || undefined,
+			onSettingsUpdate: (newSettings: CuppleSettings) => {
+				setSettings(newSettings);
+			},
+			onClearHistory: async () => {
+				await saveHistory([]);
+				setHistory([]);
+			},
+			onExit: () => {
+				process.exit(0);
+			},
+		};
+
+		return (
+			<Box flexDirection="column">
+				<Box>
+					<AnimatedTitle title="Cupple" interval={200} />
+					{serverInfo && (
+						<Text color="#a855f7"> • {serverInfo.url}</Text>
+					)}
+				</Box>
+				<Text dimColor>
+					Bridge your frontend & backend—seamlessly share context between AI
+					agents via markdown
+				</Text>
+				<Text dimColor>─────────</Text>
+				<InitScreen
+					context={context}
+					onComplete={async result => {
+						setShowInit(false);
+						const currentHistory = await loadHistory();
+						await saveHistory([...currentHistory, {
+							message: result.message,
+							color: result.color,
+							timestamp: Date.now(),
+						}]);
+						setHistory(await loadHistory());
+					}}
+				/>
+			</Box>
 		);
 	}
 
@@ -518,12 +596,25 @@ export const App: React.FC = () => {
 
 						const generationResults: HistoryItem[] = [];
 
-						// Generate or update markdown for each selected file
-						for (const filePath of files) {
-							const result = await updateMarkdownForFile(
-								filePath,
-								settings!.apiKey!,
-							);
+					// Generate or update markdown for each selected file
+					for (const filePath of files) {
+						// Determine detail level based on file extension
+						const match = filePath.match(/\.[^.]+$/);
+						const ext = match ? match[0] : '';
+						
+						let detailLevel: 'brief' | 'standard' | 'comprehensive' = 'standard';
+						if (settings!.extensionConfigs) {
+							const config = settings!.extensionConfigs.find(c => c.extension === ext);
+							detailLevel = config?.detailLevel || 'standard';
+						} else {
+							detailLevel = settings!.docDetailLevel || 'standard';
+						}
+						
+						const result = await updateMarkdownForFile(
+							filePath,
+							settings!.apiKey!,
+							detailLevel,
+						);
 
 							if (result.success) {
 								const action = result.wasCreated ? 'Generated' : 'Updated';

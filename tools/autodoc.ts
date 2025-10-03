@@ -1,6 +1,10 @@
 import {FileSystemEvent, FileWatcherCallback} from '../utils/fileWatcher.js';
+import type {ExtensionConfig, DocDetailLevel} from '../utils/settings.js';
 import {updateMarkdownForFile} from './updateMD.js';
 import {basename} from 'path';
+
+// Re-export for consumers of AutodocConfig
+export type {ExtensionConfig, DocDetailLevel};
 
 export type AutodocConfig = {
 	// Threshold for lines changed before triggering auto-generation
@@ -8,13 +12,18 @@ export type AutodocConfig = {
 	// Whether to generate docs for new files immediately
 	generateOnCreate: boolean;
 	// File extensions to watch (e.g., ['.ts', '.tsx', '.js', '.jsx'])
+	// DEPRECATED: Use extensionConfigs instead
 	fileExtensions?: string[];
+	// Per-extension documentation configurations
+	extensionConfigs?: ExtensionConfig[];
 	// Directories to exclude (e.g., ['node_modules', 'dist', '.cupple'])
 	excludeDirs?: string[];
-	// Cooldown period in milliseconds (default: 2 minutes)
+	// Cooldown period in milliseconds (default: 30 seconds)
 	cooldownMs?: number;
-	// Debounce delay in milliseconds - waits for changes to stop before generating (default: 10 seconds)
+	// Debounce delay in milliseconds - waits for changes to stop before generating (default: 20 seconds)
 	debounceMs?: number;
+	// DEPRECATED: Use extensionConfigs instead
+	docDetailLevel?: DocDetailLevel;
 };
 
 export type AutodocResult = {
@@ -38,10 +47,12 @@ export class AutodocController {
 	private lastDocumentedTime: Map<string, number> = new Map();
 	// Track pending documentation timers per file for debouncing
 	private pendingTimers: Map<string, NodeJS.Timeout> = new Map();
-	// Cooldown period in milliseconds (default: 2 minutes)
+	// Cooldown period in milliseconds (default: 30 seconds)
 	private cooldownMs: number;
-	// Debounce delay in milliseconds (default: 10 seconds)
+	// Debounce delay in milliseconds (default: 20 seconds)
 	private debounceMs: number;
+	// Map of extensions to their detail levels for quick lookup
+	private extensionDetailMap: Map<string, DocDetailLevel> = new Map();
 
 	constructor(
 		apiKey: string,
@@ -51,8 +62,34 @@ export class AutodocController {
 		this.apiKey = apiKey;
 		this.config = config;
 		this.callback = callback;
-		this.cooldownMs = config.cooldownMs || 120000; // Default 2 minutes
-		this.debounceMs = config.debounceMs || 10000; // Default 10 seconds
+		this.cooldownMs = config.cooldownMs || 30000; // Default 30 seconds
+		this.debounceMs = config.debounceMs || 20000; // Default 20 seconds
+		
+		// Build extension to detail level map
+		if (config.extensionConfigs) {
+			config.extensionConfigs.forEach(cfg => {
+				this.extensionDetailMap.set(cfg.extension, cfg.detailLevel);
+			});
+		} else {
+			// Fallback to old config format
+			const defaultDetail = config.docDetailLevel || 'standard';
+			const extensions = config.fileExtensions || ['.ts', '.tsx', '.js', '.jsx'];
+			extensions.forEach(ext => {
+				this.extensionDetailMap.set(ext, defaultDetail);
+			});
+		}
+	}
+	
+	/**
+	 * Get the detail level for a file based on its extension
+	 */
+	private getDetailLevelForFile(filePath: string): DocDetailLevel {
+		// Find the extension
+		const match = filePath.match(/\.[^.]+$/);
+		if (!match) return 'standard';
+		
+		const ext = match[0];
+		return this.extensionDetailMap.get(ext) || 'standard';
 	}
 
 	/**
@@ -89,29 +126,41 @@ export class AutodocController {
 				// Update cumulative changes
 				this.fileChanges.set(event.path, totalChanges);
 
-				// Check if threshold is reached and not in cooldown
+				// Check if threshold is reached
 				if (totalChanges >= this.config.changeThreshold) {
-					if (!this.isInCooldown(event.path)) {
-						// Clear any existing timer for this file
-						const existingTimer = this.pendingTimers.get(event.path);
-						if (existingTimer) {
-							clearTimeout(existingTimer);
-						}
+					// Check if we already have a pending timer for this file
+					const existingTimer = this.pendingTimers.get(event.path);
+					
+					if (existingTimer) {
+						// Clear the existing timer and restart debounce
+						clearTimeout(existingTimer);
+					}
 
+					// Only create a new timer if not in cooldown
+					if (!this.isInCooldown(event.path)) {
 						// Start a new debounce timer
 						const timer = setTimeout(async () => {
-							// Generate documentation after debounce period
-							await this.generateDocumentation(event.path, totalChanges);
-							// Reset the change counter after generating
-							this.fileChanges.set(event.path, 0);
-							// Remove the timer from tracking
+							// Remove the timer from tracking first
 							this.pendingTimers.delete(event.path);
+							
+							// Double-check cooldown before generating (in case it was set by another timer)
+							if (!this.isInCooldown(event.path)) {
+								// Set cooldown BEFORE starting generation to prevent race conditions
+								this.lastDocumentedTime.set(event.path, Date.now());
+								
+								// Get the current accumulated changes
+								const finalChanges = this.fileChanges.get(event.path) || 0;
+								// Generate documentation after debounce period
+								await this.generateDocumentation(event.path, finalChanges);
+								// Reset the change counter after generating
+								this.fileChanges.set(event.path, 0);
+							}
 						}, this.debounceMs);
 
 						// Track the timer
 						this.pendingTimers.set(event.path, timer);
 					}
-					// If in cooldown, keep accumulating changes
+					// If in cooldown, keep accumulating changes but don't create timers
 				}
 			}
 		};
@@ -138,12 +187,16 @@ export class AutodocController {
 		linesChanged: number,
 	): Promise<void> {
 		try {
-			const result = await updateMarkdownForFile(filePath, this.apiKey);
+			const detailLevel = this.getDetailLevelForFile(filePath);
+			const result = await updateMarkdownForFile(
+				filePath,
+				this.apiKey,
+				detailLevel,
+			);
 			
 			if (result.success) {
 				this.documentedFiles.add(filePath);
-				// Record the time of documentation for cooldown
-				this.lastDocumentedTime.set(filePath, Date.now());
+				// Note: Cooldown is already set before this method is called
 				
 				this.callback({
 					filePath,
@@ -190,14 +243,15 @@ export class AutodocController {
 			return true;
 		}
 
-		// Check file extensions if specified
-		if (this.config.fileExtensions && this.config.fileExtensions.length > 0) {
-			const hasValidExtension = this.config.fileExtensions.some(ext =>
-				filePath.endsWith(ext),
-			);
-			if (!hasValidExtension) {
-				return true;
-			}
+		// Check if file extension is configured for documentation
+		const match = filePath.match(/\.[^.]+$/);
+		if (!match) {
+			return true; // No extension, skip
+		}
+		
+		const ext = match[0];
+		if (!this.extensionDetailMap.has(ext)) {
+			return true; // Extension not configured, skip
 		}
 
 		return false;
