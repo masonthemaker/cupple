@@ -8,7 +8,9 @@
   },
   "files": [
     "dist",
-    "setup.js"
+    "setup.js",
+    "LICENSE",
+    "README.md"
   ],
   "scripts": {
     "start": "tsx index.tsx",
@@ -25,9 +27,9 @@
     "frontend",
     "backend"
   ],
-  "author": "",
-  "license": "ISC",
-  "description": "Bridge your frontend & backend—seamlessly share context between AI agents via markdown",
+  "author": "Mason Adams",
+  "license": "MIT",
+  "description": "Living docs that sync across IDEs and agents",
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.1.1",
     "cors": "^2.8.5",

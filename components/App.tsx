@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {Box, Text} from 'ink';
 import {mkdir} from 'fs/promises';
 import {join, basename} from 'path';
-import {watch} from 'fs';
+import {watch, existsSync} from 'fs';
 import {AnimatedTitle} from './AnimatedTitle.js';
 import {HistoryDisplay} from './HistoryDisplay.js';
 import {InputPrompt} from './InputPrompt.js';
@@ -55,15 +55,36 @@ export const App: React.FC = () => {
 		const info = await server.start();
 		setServerInfo(info);
 
-			// Load settings
-			const loadedSettings = await loadSettings();
-			setSettings(loadedSettings);
+		// Load settings
+		const loadedSettings = await loadSettings();
+		setSettings(loadedSettings);
 
-			// Load history
-			const loadedHistory = await loadHistory();
+		// Load history
+		const loadedHistory = await loadHistory();
+		
+		// Check if /init has been run (indicated by extensionConfigs)
+		if (loadedSettings?.apiKey && !loadedSettings.extensionConfigs) {
+			// Add a warning message to history if /init hasn't been run
+			const initWarning: HistoryItem = {
+				message: '⚠️ - Please run /init to configure autodoc before getting started',
+				color: '#f59e0b',
+				timestamp: Date.now(),
+			};
+			
+			// Only add if not already the most recent message
+			const lastMessage = loadedHistory[loadedHistory.length - 1];
+			if (!lastMessage || !lastMessage.message.includes('/init to configure')) {
+				const updatedHistory = [...loadedHistory, initWarning];
+				await saveHistory(updatedHistory);
+				setHistory(updatedHistory);
+			} else {
+				setHistory(loadedHistory);
+			}
+		} else {
 			setHistory(loadedHistory);
+		}
 
-			setIsLoading(false);
+		setIsLoading(false);
 		};
 
 		initialize();
@@ -85,6 +106,11 @@ export const App: React.FC = () => {
 	useEffect(() => {
 		const historyPath = join(process.cwd(), '.cupple', 'history.json');
 		
+		// Check if history file exists before watching
+		if (!existsSync(historyPath)) {
+			return; // Skip watching if file doesn't exist yet
+		}
+		
 		const historyWatcher = watch(historyPath, async (eventType) => {
 			if (eventType === 'change') {
 				// Reload history when the file changes
@@ -101,6 +127,11 @@ export const App: React.FC = () => {
 	// Watch settings for external changes (like API pairing/unpairing)
 	useEffect(() => {
 		const settingsPath = join(process.cwd(), '.cupple', 'cupplesettings.json');
+		
+		// Check if settings file exists before watching
+		if (!existsSync(settingsPath)) {
+			return; // Skip watching if file doesn't exist yet
+		}
 		
 		const settingsWatcher = watch(settingsPath, async (eventType) => {
 			if (eventType === 'change') {
@@ -374,8 +405,7 @@ export const App: React.FC = () => {
 			<Box flexDirection="column">
 				<AnimatedTitle title="Cupple" interval={200} />
 				<Text dimColor>
-					Bridge your frontend & backend—seamlessly share context between AI
-					agents via markdown
+					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────</Text>
 				<Text dimColor>Loading...</Text>
@@ -423,8 +453,7 @@ export const App: React.FC = () => {
 					)}
 				</Box>
 				<Text dimColor>
-					Bridge your frontend & backend—seamlessly share context between AI
-					agents via markdown
+					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────</Text>
 				<InitScreen
@@ -462,8 +491,7 @@ export const App: React.FC = () => {
 					</Text>
 				</Box>
 				<Text dimColor>
-					Bridge your frontend & backend—seamlessly share context between AI
-					agents via markdown
+					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────</Text>
 				<FileBrowser
@@ -511,8 +539,7 @@ export const App: React.FC = () => {
 					</Text>
 				</Box>
 				<Text dimColor>
-					Bridge your frontend & backend—seamlessly share context between AI
-					agents via markdown
+					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────</Text>
 				<LocalFileBrowser
@@ -555,8 +582,7 @@ export const App: React.FC = () => {
 				</Text>
 			</Box>
 				<Text dimColor>
-					Bridge your frontend & backend—seamlessly share context between AI
-					agents via markdown
+					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────</Text>
 				<FileSelector
@@ -774,8 +800,7 @@ export const App: React.FC = () => {
 				</Text>
 			</Box>
 			<Text dimColor>
-				Bridge your frontend & backend—seamlessly share context between AI
-				agents via markdown
+				Living docs that sync across IDEs and agents
 			</Text>
 			<Text dimColor>─────────</Text>
 			{settings?.pendingPairingRequest && (

@@ -15,11 +15,20 @@ export const handleAutoCommand = async (
 	args: string[],
 	context: CommandContext,
 ): Promise<CommandResult> => {
+	// Check if /init has been run
+	if (!context.settings.extensionConfigs) {
+		return {
+			success: false,
+			message: '⚠️ Please run /init to configure autodoc first',
+			color: '#f59e0b',
+		};
+	}
+
 	// Only works in auto mode
 	if (context.settings.mode !== 'auto') {
 		return {
 			success: false,
-			message: '✗ /auto command only works in auto mode',
+			message: '✗ /auto command only works in auto mode. Use /mode to switch to auto mode.',
 			color: '#ef4444',
 		};
 	}

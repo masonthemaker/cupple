@@ -23,8 +23,7 @@ export const HelpScreen: React.FC<HelpScreenProps> = ({onBack, serverUrl}) => {
 				)}
 			</Box>
 			<Text dimColor>
-				Bridge your frontend & backend—seamlessly share context between AI
-				agents via markdown
+				Living docs that sync across IDEs and agents
 			</Text>
 			<Text dimColor>─────────</Text>
 

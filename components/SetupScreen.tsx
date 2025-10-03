@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import {Box, Text, useInput} from 'ink';
-import TextInput from 'ink-text-input';
 import {AnimatedTitle} from './AnimatedTitle.js';
 
 interface SetupScreenProps {
@@ -15,18 +14,39 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({onComplete}) => {
 	const [apiKeyError, setApiKeyError] = useState('');
 	const [selectedIndex, setSelectedIndex] = useState(0);
 
-	const handleApiKeySubmit = (value: string) => {
-		// Use the current state value if value is shorter (due to display truncation)
-		const actualValue = apiKey.length > value.length ? apiKey : value;
-		const trimmedValue = actualValue.trim();
+	const handleApiKeySubmit = () => {
+		const trimmedValue = apiKey.trim();
 		
 		if (trimmedValue.length < 10) {
 			setApiKeyError('Invalid API key. Must be at least 10 characters.');
 			return;
 		}
-		setApiKey(trimmedValue);
+		setApiKeyError('');
 		setStep('mode');
 	};
+
+	// Handle API key input
+	useInput(
+		(input, key) => {
+			if (step !== 'api-key') return;
+
+			if (key.return) {
+				handleApiKeySubmit();
+			} else if (key.backspace || key.delete) {
+				setApiKey(prev => prev.slice(0, -1));
+				setApiKeyError('');
+			} else if ((key.ctrl && input === 'u') || (key.ctrl && input === 'c')) {
+				// Ctrl+U or Ctrl+C to clear
+				setApiKey('');
+				setApiKeyError('');
+			} else if (input && !key.ctrl && !key.meta && !key.escape) {
+				// Add any printable character (including pasted content)
+				setApiKey(prev => prev + input);
+				setApiKeyError('');
+			}
+		},
+		{isActive: step === 'api-key'},
+	);
 
 	// Handle arrow keys and enter for mode selection
 	useInput(
@@ -51,8 +71,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({onComplete}) => {
 			<Box flexDirection="column" padding={1}>
 				<AnimatedTitle title="Cupple" interval={200} />
 				<Text dimColor>
-					Bridge your frontend & backend—seamlessly share context between AI
-					agents via markdown
+					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────</Text>
 
@@ -99,17 +118,16 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({onComplete}) => {
 			<Box marginBottom={1} flexDirection="column">
 				<Box>
 					<Text color="#f9a8d4">❯ </Text>
-					<TextInput
-						value={apiKey}
-						onChange={setApiKey}
-						onSubmit={handleApiKeySubmit}
-						placeholder="Paste your API key here..."
-					/>
+					{apiKey.length > 0 ? (
+						<Text color="#f9a8d4">••••••••</Text>
+					) : (
+						<Text dimColor>Paste your API key here...</Text>
+					)}
 				</Box>
 				{apiKey.length > 0 && (
 					<Box marginTop={1}>
-						<Text dimColor>
-							✓ {apiKey.length} characters captured
+						<Text color="#22c55e">
+							✓ {apiKey.length} characters captured (press Enter to continue)
 						</Text>
 					</Box>
 				)}
@@ -126,7 +144,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({onComplete}) => {
 						Your API key is stored securely in .cupple/cupplesettings.json
 					</Text>
 					<Text dimColor italic>
-						Press Enter when done
+						Press Enter when done • Backspace to clear
 					</Text>
 				</Box>
 			</Box>
