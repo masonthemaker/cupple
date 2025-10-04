@@ -1,5 +1,23 @@
 # Cupple
 
+<div align="center">
+
+## 🚀 Active Development - Join Our Community!
+
+<a href="https://discord.gg/hxya9aEjJg">
+  <img src="https://assets-global.website-files.com/6257adef93867e50d84d30e2/636e0a6a49cf127bf92de1e2_icon_clyde_blurple_RGB.png" alt="Discord" width="80" height="80"/>
+</a>
+
+### [**Join Our Discord Server**](https://discord.gg/hxya9aEjJg)
+
+**Pushing 10-15 updates per month** | Get support, share ideas, and stay updated with the latest features!
+
+[![Discord](https://img.shields.io/badge/Click%20to%20Join-5865F2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/hxya9aEjJg)
+
+---
+
+</div>
+
 > Living docs that sync across IDEs and agents
 
 **Cupple** is a CLI tool that automatically generates and maintains AI-readable markdown documentation for your codebase. It's designed for the age of agentic coding—where AI assistants need up-to-date context to help you build better software, faster.

@@ -1,7 +1,8 @@
 import React, {useState, useEffect} from 'react';
 import {Text, Box} from 'ink';
 import {readFileSync} from 'fs';
-import {join} from 'path';
+import {join, dirname} from 'path';
+import {fileURLToPath} from 'url';
 
 interface AnimatedTitleProps {
 	title: string;
@@ -15,9 +16,21 @@ interface AnimatedTitleProps {
 
 const getVersion = (): string => {
 	try {
-		const packageJsonPath = join(process.cwd(), 'package.json');
-		const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-		return packageJson.version || '1.0.0';
+		// Get the directory of this file, then go up to package root
+		const __filename = fileURLToPath(import.meta.url);
+		const __dirname = dirname(__filename);
+		
+		// Try one level up (for source) and two levels up (for compiled dist)
+		let packageJsonPath = join(__dirname, '..', 'package.json');
+		try {
+			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+			return packageJson.version || '1.0.0';
+		} catch {
+			// Try two levels up (for dist folder structure)
+			packageJsonPath = join(__dirname, '..', '..', 'package.json');
+			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+			return packageJson.version || '1.0.0';
+		}
 	} catch (error) {
 		return '1.0.0';
 	}
