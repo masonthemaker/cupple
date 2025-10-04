@@ -4,4 +4,6 @@ export {loadSettings, saveSettings, validateApiKey} from './settings.js';
 export type {CuppleSettings, PairedInstance, PendingPairingRequest, ExtensionConfig, DocDetailLevel} from './settings.js';
 export {loadHistory, saveHistory, addHistoryItem, clearHistory} from './history.js';
 export type {HistoryItem} from './history.js';
+export {checkForUpdates} from './versionCheck.js';
+export type {VersionCheckResult} from './versionCheck.js';
 

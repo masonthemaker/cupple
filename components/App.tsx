@@ -18,6 +18,7 @@ import {
 	saveSettings,
 	loadHistory,
 	saveHistory,
+	checkForUpdates,
 } from '../utils/index.js';
 import type {CuppleSettings, HistoryItem} from '../utils/index.js';
 import {executeCommand, InitScreen} from '../commands/index.js';
@@ -38,6 +39,9 @@ export const App: React.FC = () => {
 	const [showInit, setShowInit] = useState(false);
 	const [browsePairedPort, setBrowsePairedPort] = useState<number | null>(null);
 	const [pushToPairedPort, setPushToPairedPort] = useState<number | null>(null);
+	const [, forceUpdate] = useState({});
+	const [updateAvailable, setUpdateAvailable] = useState(false);
+	const [latestVersion, setLatestVersion] = useState<string | undefined>();
 
 
 	// Ensure .cupple folder exists, start server, and load settings
@@ -85,6 +89,16 @@ export const App: React.FC = () => {
 		}
 
 		setIsLoading(false);
+		
+		// Check for updates in the background
+		checkForUpdates().then(result => {
+			if (result.hasUpdate) {
+				setUpdateAvailable(true);
+				setLatestVersion(result.latestVersion);
+			}
+		}).catch(() => {
+			// Silently fail - don't interrupt the app
+		});
 		};
 
 		initialize();
@@ -145,6 +159,22 @@ export const App: React.FC = () => {
 
 		return () => {
 			settingsWatcher.close();
+		};
+	}, []);
+
+	// Handle terminal resize - clear and re-render
+	useEffect(() => {
+		const handleResize = () => {
+			// Clear the screen
+			process.stdout.write('\x1Bc');
+			// Force re-render
+			forceUpdate({});
+		};
+
+		process.stdout.on('resize', handleResize);
+
+		return () => {
+			process.stdout.off('resize', handleResize);
 		};
 	}, []);
 
@@ -404,10 +434,11 @@ export const App: React.FC = () => {
 		return (
 			<Box flexDirection="column">
 				<AnimatedTitle title="Cupple" interval={200} />
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>
 					Living docs that sync across IDEs and agents
 				</Text>
-				<Text dimColor>─────────</Text>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>Loading...</Text>
 			</Box>
 		);
@@ -452,10 +483,11 @@ export const App: React.FC = () => {
 						<Text color="#a855f7"> • {serverInfo.url}</Text>
 					)}
 				</Box>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>
 					Living docs that sync across IDEs and agents
 				</Text>
-				<Text dimColor>─────────</Text>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<InitScreen
 					context={context}
 					onComplete={async result => {
@@ -490,10 +522,11 @@ export const App: React.FC = () => {
 						• API: {hasApiKey ? '✓' : '✗'}
 					</Text>
 				</Box>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>
 					Living docs that sync across IDEs and agents
 				</Text>
-				<Text dimColor>─────────</Text>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<FileBrowser
 					pairedPort={browsePairedPort}
 					onCancel={() => setBrowsePairedPort(null)}
@@ -538,10 +571,11 @@ export const App: React.FC = () => {
 						• API: {hasApiKey ? '✓' : '✗'}
 					</Text>
 				</Box>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>
 					Living docs that sync across IDEs and agents
 				</Text>
-				<Text dimColor>─────────</Text>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<LocalFileBrowser
 					pairedPort={pushToPairedPort}
 					onCancel={() => setPushToPairedPort(null)}
@@ -581,10 +615,11 @@ export const App: React.FC = () => {
 					• API: {hasApiKey ? '✓' : '✗'}
 				</Text>
 			</Box>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>
 					Living docs that sync across IDEs and agents
 				</Text>
-				<Text dimColor>─────────</Text>
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<FileSelector
 					changedFiles={(() => {
 						// Get unique files by filePath (keep the entry for each unique file)
@@ -789,20 +824,19 @@ export const App: React.FC = () => {
 
 	return (
 		<Box flexDirection="column">
-			<Box>
-				<AnimatedTitle title="Cupple" interval={200} />
-				{serverInfo && (
-					<Text color="#a855f7"> • {serverInfo.url}</Text>
-				)}
-				<Text color={hasApiKey ? '#22c55e' : '#ef4444'}>
-					{' '}
-					• API: {hasApiKey ? '✓' : '✗'}
-				</Text>
-			</Box>
+			<AnimatedTitle 
+				title="Cupple" 
+				interval={200} 
+				serverUrl={serverInfo?.url}
+				hasApiKey={!!hasApiKey}
+				updateAvailable={updateAvailable}
+				latestVersion={latestVersion}
+			/>
+			<Text dimColor>─────────────────────────────────────────</Text>
 			<Text dimColor>
 				Living docs that sync across IDEs and agents
 			</Text>
-			<Text dimColor>─────────</Text>
+			<Text dimColor>─────────────────────────────────────────</Text>
 			{settings?.pendingPairingRequest && (
 				<PairingRequest
 					port={settings.pendingPairingRequest.port}

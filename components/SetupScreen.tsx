@@ -70,10 +70,11 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({onComplete}) => {
 		return (
 			<Box flexDirection="column" padding={1}>
 				<AnimatedTitle title="Cupple" interval={200} />
+				<Text dimColor>─────────────────────────────────────────</Text>
 				<Text dimColor>
 					Living docs that sync across IDEs and agents
 				</Text>
-				<Text dimColor>─────────</Text>
+				<Text dimColor>─────────────────────────────────────────</Text>
 
 				<Box marginTop={1} marginBottom={1}>
 					<Text color="#ec4899" bold>
