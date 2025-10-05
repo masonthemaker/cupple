@@ -42,15 +42,6 @@ export const HistoryDisplay: React.FC<HistoryDisplayProps> = ({history}) => {
 								{item.filename}
 							</Text>
 						)}
-						{item.type === 'file_modified' &&
-							item.linesAdded !== undefined &&
-							item.linesDeleted !== undefined && (
-								<>
-									{' '}
-									<Text color="#22c55e">+{item.linesAdded}</Text>
-									<Text color="#ef4444">/-{item.linesDeleted}</Text>
-								</>
-							)}
 					</Text>
 				);
 			})}

@@ -9,6 +9,7 @@ export {handleBrowseCommand} from './browse.js';
 export {handleAutoCommand} from './auto.js';
 export {handleInitCommand, InitScreen} from './init.js';
 export {handleRedocCommand} from './redoc.js';
+export {handleDiscordCommand} from './discord.js';
 
 import type {CommandResult, CommandContext} from './types.js';
 import {handleModeCommand} from './mode.js';
@@ -21,6 +22,7 @@ import {handleBrowseCommand} from './browse.js';
 import {handleAutoCommand} from './auto.js';
 import {handleInitCommand} from './init.js';
 import {handleRedocCommand} from './redoc.js';
+import {handleDiscordCommand} from './discord.js';
 
 export const executeCommand = async (
 	command: string,
@@ -59,6 +61,9 @@ export const executeCommand = async (
 
 	case '/redoc':
 		return handleRedocCommand(context, args);
+
+	case '/discord':
+		return await handleDiscordCommand(context);
 
 	default:
 		// Not a command

@@ -38,7 +38,7 @@ const getVersion = (): string => {
 
 export const AnimatedTitle: React.FC<AnimatedTitleProps> = ({
 	title,
-	interval = 200,
+	interval = 300,
 	showVersion = true,
 	serverUrl,
 	hasApiKey,
@@ -48,112 +48,58 @@ export const AnimatedTitle: React.FC<AnimatedTitleProps> = ({
 	const [highlightIndex, setHighlightIndex] = useState(0);
 	const version = getVersion();
 
-	const logo = [
-		' ██████╗██╗   ██╗██████╗ ██████╗ ██╗     ███████╗',
-		'██╔════╝██║   ██║██╔══██╗██╔══██╗██║     ██╔════╝',
-		'██║     ██║   ██║██████╔╝██████╔╝██║     █████╗  ',
-		'██║     ██║   ██║██╔═══╝ ██╔═══╝ ██║     ██╔══╝  ',
-		'╚██████╗╚██████╔╝██║     ██║     ███████╗███████╗',
-		' ╚═════╝ ╚═════╝ ╚═╝     ╚═╝     ╚══════╝╚══════╝',
-	];
-
 	useEffect(() => {
-		const maxLength = Math.max(...logo.map(line => line.length));
 		const intervalId = setInterval(() => {
-			setHighlightIndex(prev => (prev + 1) % maxLength);
+			setHighlightIndex(prev => (prev + 1) % title.length);
 		}, interval);
 
 		return () => clearInterval(intervalId);
-	}, [interval]);
+	}, [interval, title.length]);
 
 	return (
 		<Box 
 			borderStyle="round" 
-			borderColor="white" 
-			padding={1}
+			borderColor="#ec4899" 
+			paddingX={2}
+			paddingY={1}
 			flexShrink={0}
-			overflow="hidden"
 		>
-			<Box flexDirection="column" flexShrink={0}>
-				{logo.map((line, rowIndex) => (
-					<Box key={rowIndex} flexShrink={0}>
-						{line.split('').map((char, colIndex) => (
-							<Text
-								key={colIndex}
-								bold
-								color={
-									colIndex === highlightIndex
-										? '#ffffff'
-										: rowIndex % 2 === 0
-										? '#ec4899'
-										: '#f9a8d4'
-								}
+			<Box flexDirection="column">
+				{/* Title row */}
+				<Box>
+					<Text bold>
+						{title.split('').map((char, index) => (
+							<Text 
+								key={index}
+								color={index === highlightIndex ? '#ffffff' : '#ec4899'}
 							>
 								{char}
 							</Text>
 						))}
-					</Box>
-				))}
-				<Box>
+					</Text>
 					{showVersion && (
-						<Text dimColor>v{version}</Text>
-					)}
-					{updateAvailable && latestVersion && (
-						<Text color="#f59e0b"> • Update available: v{latestVersion}</Text>
+						<Text dimColor> v{version}</Text>
 					)}
 					{serverUrl && (
 						<Text color="#a855f7"> • {serverUrl}</Text>
 					)}
 					{hasApiKey !== undefined && (
 						<Text color={hasApiKey ? '#22c55e' : '#ef4444'}>
-							{' '}• API: {hasApiKey ? '✓' : '✗'}
+							{' '}• API {hasApiKey ? '✓' : '✗'}
 						</Text>
 					)}
+					{updateAvailable && latestVersion && (
+						<Text color="#f59e0b"> • Update: v{latestVersion}</Text>
+					)}
 				</Box>
-			</Box>
-			
-			<Box 
-				flexDirection="column" 
-				marginLeft={2}
-				flexShrink={0}
-			>
-				{updateAvailable ? (
-					<>
-						<Text bold color="#f59e0b">  ⚠️  Update Available!</Text>
-						<Box marginTop={1} flexShrink={0}>
-							<Text>  Run </Text>
-							<Text color="#f9a8d4">npm update -g cupple</Text>
-						</Box>
-						<Box flexShrink={0}>
-							<Text dimColor>  to get v{latestVersion}</Text>
-						</Box>
-					</>
-				) : (
-					<>
-						<Text bold color="#22c55e">🚀 Getting Started</Text>
-						<Box marginTop={1} flexShrink={0}>
-							<Text dimColor>1. </Text>
-							<Text>Choose your mode with </Text>
-							<Text color="#f9a8d4">/mode</Text>
-						</Box>
-						<Box flexShrink={0}>
-							<Text dimColor>2. </Text>
-							<Text>Configure autodoc with </Text>
-							<Text color="#f9a8d4">/init</Text>
-						</Box>
-						<Box flexShrink={0}>
-							<Text dimColor>3. </Text>
-							<Text>Run </Text>
-							<Text color="#f9a8d4">cupple</Text>
-							<Text> in another project</Text>
-						</Box>
-						<Box flexShrink={0}>
-							<Text dimColor>4. </Text>
-							<Text>Pair them with </Text>
-							<Text color="#f9a8d4">/pair {'<port>'}</Text>
-						</Box>
-					</>
-				)}
+				{/* Discord link */}
+				<Box marginTop={1}>
+					<Text dimColor>💬 Join our Discord: </Text>
+					<Text color="#5865F2">https://discord.gg/S7zRnuTk</Text>
+					<Text dimColor> (type </Text>
+					<Text color="#f9a8d4">/discord</Text>
+					<Text dimColor> to open)</Text>
+				</Box>
 			</Box>
 		</Box>
 	);
