@@ -1,17 +1,17 @@
 # `HelpScreen` – Interactive CLI Help Component  
 
-A small, self‑contained **Ink** component that renders a colourful help screen for the Cupple CLI and captures the **Esc** key to return to the previous view.
+A small, self‑contained **Ink** component that renders a colour‑coded help screen for the Cupple CLI and captures the **Esc** key to return to the previous view.
 
 ---
 
 ## Purpose  
 
-Display a concise list of available slash‑commands, their syntax and a brief description while allowing the user to dismiss the screen with **Esc**.  
+Display a concise list of available slash‑commands, their syntax and a brief description while allowing the user to dismiss the screen with **Esc**.
 
 > **Why use it?**  
 > - Keeps the help UI consistent across the application.  
-> - Handles the key‑binding (`Esc`) for you, so parent components only need to provide a callback.  
-> - Works out‑of‑the‑box with Ink’s `<Box>` / `<Text>` layout primitives.
+> - Handles the **Esc** key‑binding for you, so parent components only need to provide a callback.  
+> - Works out‑of‑the‑box with Ink’s `<Box>` / `<Text>` layout primitives.  
 
 ---
 
@@ -22,9 +22,9 @@ Display a concise list of available slash‑commands, their syntax and a brief d
 | `useInput` | Listens for keyboard events; when **Esc** is pressed it invokes `onBack`. |
 | `<Box flexDirection="column">` | Root container – stacks everything vertically. |
 | `<Text bold>` | Header “Available Commands:”. |
-| Nested `<Box>` elements | Group command sections (selector, pairing, misc) and add vertical spacing (`marginTop`). |
+| Nested `<Box marginTop={…}>` | Adds vertical spacing between command groups. |
 | `<Text dimColor>` | Footer hint (“Press ESC to go back”) and auxiliary notes (size options). |
-| Colour‑coded `<Text color="…">` | Visual grouping of command families (green, blue, orange). |
+| Colour‑coded `<Text color="#…">` | Visual grouping of command families (green, blue, orange). |
 
 The component is deliberately **stateless** – it only renders static content and forwards the *back* action.
 
@@ -34,7 +34,7 @@ The component is deliberately **stateless** – it only renders static content a
 
 ```ts
 interface HelpScreenProps {
-  /** Called when the user presses <Esc>. Typically pops the screen. */
+  /** Called when the user presses <Esc>. Required at runtime. */
   onBack: () => void;
 
   /** Optional URL of the server the CLI is connected to.
@@ -43,7 +43,8 @@ interface HelpScreenProps {
 }
 ```
 
-*Both props are optional for TypeScript consumers, but `onBack` is required at runtime – the component will throw if it’s missing.*
+- `onBack` **must** be supplied; the component will call it whenever **Esc** is pressed.  
+- `serverUrl` is optional and not rendered – it exists solely for future extensions.
 
 ---
 
@@ -76,11 +77,12 @@ const App: React.FC = () => {
 render(<App />);
 ```
 
-### 2️⃣ Wiring the **Esc** key from a higher level  
+### 2️⃣ Forwarding the **Esc** key from a higher level  
 
 If you already have a global `useInput` handler, you can forward the escape event:
 
 ```tsx
+import React, { useState } from 'react';
 import { useInput } from 'ink';
 import { HelpScreen } from './HelpScreen';
 
@@ -89,7 +91,7 @@ const Parent: React.FC = () => {
 
   useInput((_input, key) => {
     if (key.escape && showHelp) {
-      setShowHelp(false);   // same as onBack()
+      setShowHelp(false); // same effect as onBack()
     }
   });
 
@@ -110,20 +112,20 @@ const Parent: React.FC = () => {
 />
 ```
 
-*Even though `serverUrl` isn’t displayed now, the prop is kept so future versions can show connection info without breaking the API.*
+*The URL is not displayed yet, but keeping the prop avoids breaking changes when the UI is extended.*
 
 ---
 
-## Notable Gotchas & Edge Cases  
+## Notable Considerations  
 
 | Situation | What to watch for | Remedy |
 |-----------|-------------------|--------|
-| **Missing `onBack`** | The component will still render but pressing **Esc** does nothing (or throws a runtime error if you rely on the callback). | Always supply a stable function, even a no‑op: `onBack={() => {}}`. |
-| **Running outside an Ink `<Provider>`** | `useInput` and Ink primitives require the Ink runtime. | Render the component via `ink.render()` or as a child of another Ink component. |
-| **Custom key handling** | `HelpScreen` only consumes **Esc**; other keys (e.g., `h`) are ignored. | Add additional `useInput` in the parent if you want other shortcuts. |
-| **Server URL unused** | The prop is currently ignored – developers might think it will be displayed. | Treat it as a placeholder for future enhancements; no visual side‑effects now. |
-| **Color support** | Some terminals (e.g., Windows CMD without VT support) may not render the hex colors. | Ink falls back to the nearest ANSI colour; the UI remains readable. |
-| **Re‑render performance** | The component re‑renders on every parent state change even though its output is static. | Wrap it in `React.memo` if you notice unnecessary renders in a large app. |
+| **Missing `onBack`** | TypeScript will flag the omission (the prop is required). | Always pass a function, even a no‑op: `onBack={() => {}}`. |
+| **Running outside an Ink `<Provider>`** | `useInput` and Ink primitives need the Ink runtime. | Render the component via `ink.render()` or as a child of another Ink component. |
+| **Custom key handling** | `HelpScreen` only consumes **Esc**; other keys (e.g., `h`) are ignored. | Add additional `useInput` in the parent if you need extra shortcuts. |
+| **Server URL unused** | The prop is currently ignored – developers might expect it to appear. | Treat it as a placeholder for future enhancements; no visual side‑effects now. |
+| **Color support** | Hex colours (`#22c55e`, `#3b82f6`, `#f59e0b`) may degrade on terminals without true‑color support. | Ink falls back to the nearest ANSI colour; the UI stays readable. |
+| **Unnecessary re‑renders** | The component re‑renders whenever its parent updates, even though its output is static. | Wrap it in `React.memo` if you notice performance concerns in a large app. |
 
 ---
 
@@ -135,8 +137,8 @@ import { HelpScreen } from './HelpScreen';
 <HelpScreen onBack={() => console.log('Help dismissed')} />
 ```
 
-- Renders a colour‑coded help list.  
+- Renders a colour‑coded list of Cupple commands.  
 - Press **Esc** → `onBack` fires.  
-- Optional `serverUrl` prop kept for future use.  
+- `serverUrl` prop is optional and currently unused.  
 
 Happy documenting! 🎉

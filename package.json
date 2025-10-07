@@ -41,6 +41,7 @@
     "@anthropic-ai/claude-agent-sdk": "^0.1.1",
     "cors": "^2.8.5",
     "cupple": "^1.0.0",
+    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "groq-sdk": "^0.33.0",
     "ink": "^6.3.1",

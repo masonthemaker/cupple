@@ -109,17 +109,19 @@ npm install -g cupple
 ### Commands
 
 ```bash
-/init              # Configure autodoc settings
-/select            # Browse and document files (selector mode)
-/redoc <file> [notes]     # Regenerate docs with custom guidance
-/auto <threshold>  # Set autodoc threshold (tiny/small/medium/big)
-/mode              # Switch between auto and selector mode
-/status            # Check server and watcher status
-/pair <port>       # Connect to another Cupple instance
-/unpair <port>     # Disconnect from paired instance
-/browse <port>     # Browse files on paired instance
-/help              # Show all commands
-/exit              # Exit Cupple
+/login            # Authenticate with Cupple web app
+/logout           # Remove authentication credentials
+/init             # Configure autodoc settings
+/select           # Browse and document files (selector mode)
+/redoc <file> [notes]    # Regenerate docs with custom guidance
+/auto <threshold> # Set autodoc threshold (tiny/small/medium/big)
+/mode             # Switch between auto and selector mode
+/status           # Check server and watcher status
+/pair <port>      # Connect to another Cupple instance
+/unpair <port>    # Disconnect from paired instance
+/browse <port>    # Browse files on paired instance
+/help             # Show all commands
+/exit             # Exit Cupple
 ```
 
 ### Auto Mode (Recommended)
@@ -167,6 +169,33 @@ cupple
 ```
 
 Now both projects can see each other's documentation—and so can your AI agents!
+
+### Authentication (Optional)
+
+Connect your CLI to the Cupple web app for cloud features:
+
+```bash
+/login            # Opens browser for authentication
+```
+
+**Setup:**
+1. Create a `.env.local` file in your project root:
+   ```env
+   CUPPLE_API=https://cupple.com
+   ```
+
+2. Run the `/login` command (only needed once per machine)
+3. Authenticate in your browser (login or sign up)
+4. Return to the CLI—you're authenticated globally!
+
+**What you get:**
+- Cloud-synced settings
+- Access to web dashboard
+- Future cloud features
+
+**Important**: You only need to authenticate once! Credentials are stored globally in your home directory (`~/.cupple/global-config.json`), so all Cupple instances across all projects will automatically use the same authentication.
+
+Authentication is optional—Cupple works great without it for local documentation.
 
 ## Configuration
 

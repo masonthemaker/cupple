@@ -29,13 +29,15 @@ export const HelpScreen: React.FC<HelpScreenProps> = ({onBack, serverUrl}) => {
 				<Text><Text color="#3b82f6">/unpair {'<port>'}</Text> - Disconnect from instance</Text>
 				<Text><Text color="#3b82f6">/browse {'<port>'}</Text> - Browse paired instance files</Text>
 				
-				<Box marginTop={1}/>
-				<Text><Text color="#f59e0b">/mode</Text> - Switch between auto/selector mode</Text>
-				<Text><Text color="#f59e0b">/status</Text> - Check server status</Text>
-				<Text><Text color="#f59e0b">/clear</Text> - Clear history</Text>
-				<Text><Text color="#f59e0b">/discord</Text> - Open Discord community</Text>
-				<Text><Text color="#f59e0b">/help</Text> - Show this help</Text>
-				<Text><Text color="#f59e0b">/exit</Text> - Exit Cupple</Text>
+			<Box marginTop={1}/>
+			<Text><Text color="#f59e0b">/login</Text> - Authenticate with Cupple web app</Text>
+			<Text><Text color="#f59e0b">/logout</Text> - Remove authentication credentials</Text>
+			<Text><Text color="#f59e0b">/mode</Text> - Switch between auto/selector mode</Text>
+			<Text><Text color="#f59e0b">/status</Text> - Check server status</Text>
+			<Text><Text color="#f59e0b">/clear</Text> - Clear history</Text>
+			<Text><Text color="#f59e0b">/discord</Text> - Open Discord community</Text>
+			<Text><Text color="#f59e0b">/help</Text> - Show this help</Text>
+			<Text><Text color="#f59e0b">/exit</Text> - Exit Cupple</Text>
 			</Box>
 
 			<Box marginTop={2}>
