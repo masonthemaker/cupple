@@ -31,6 +31,8 @@ export type AutodocResult = {
 	success: boolean;
 	outputPath?: string;
 	error?: string;
+	uploaded?: boolean; // True if doc was uploaded to server
+	uploadError?: string; // Error message if upload failed
 };
 
 export type AutodocCallback = (result: AutodocResult) => void;
@@ -211,6 +213,8 @@ export class AutodocController {
 					filePath,
 					success: true,
 					outputPath: result.outputPath,
+					uploaded: result.uploaded,
+					uploadError: result.uploadError,
 				});
 			} else {
 				this.callback({

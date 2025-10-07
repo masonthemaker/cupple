@@ -207,18 +207,32 @@ export const App: React.FC = () => {
 				async (result) => {
 					// Handle autodoc completion - add to history
 					const currentHistory = await loadHistory();
-					const item: HistoryItem = result.success
-						? {
-								message: `✅ Documentation generated for `,
-								color: '#22c55e',
-								filename: basename(result.filePath),
-								timestamp: Date.now(),
-							}
-						: {
-								message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
-								color: '#ef4444',
-								timestamp: Date.now(),
-							};
+					let item: HistoryItem;
+					
+					if (result.success) {
+						let message = `✅ Documentation generated for `;
+						
+						// Add upload status to message
+						if (result.uploaded) {
+							message = `✅ Documentation generated and uploaded for `;
+						} else if (result.uploadError && !result.uploadError.includes('No access token')) {
+							// Only show upload error if it's not just missing credentials
+							message = `✅ Documentation generated (upload failed) for `;
+						}
+						
+						item = {
+							message,
+							color: '#22c55e',
+							filename: basename(result.filePath),
+							timestamp: Date.now(),
+						};
+					} else {
+						item = {
+							message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
+							color: '#ef4444',
+							timestamp: Date.now(),
+						};
+					}
 					
 					const newHistory = [...currentHistory, item];
 					await saveHistory(newHistory);

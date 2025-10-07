@@ -91,9 +91,20 @@ export const handleRedocCommand = async (
 			const action = result.wasCreated ? 'Generated' : 'Updated';
 			const notesSuffix = notes ? ' (with guidance)' : '';
 			
+			let uploadStatus = '';
+			if (result.uploaded) {
+				uploadStatus = ' and uploaded to server';
+			} else if (result.uploadError) {
+				if (result.uploadError.includes('No access token')) {
+					uploadStatus = ' (not uploaded - run /login to enable auto-upload)';
+				} else {
+					uploadStatus = ` (upload failed: ${result.uploadError})`;
+				}
+			}
+			
 			return {
 				success: true,
-				message: `✓ ${action} documentation for ${filename}${notesSuffix}`,
+				message: `✓ ${action} documentation for ${filename}${notesSuffix}${uploadStatus}`,
 				color: '#22c55e',
 			};
 		} else {

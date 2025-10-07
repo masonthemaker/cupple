@@ -2,12 +2,15 @@ import {Groq} from 'groq-sdk';
 import {readFile, writeFile, mkdir} from 'fs/promises';
 import {basename, dirname, extname, join} from 'path';
 import {existsSync} from 'fs';
+import {uploadDocument, canUploadDocuments} from '../utils/docUploader.js';
 
 export type UpdateMDResult = {
 	success: boolean;
 	outputPath?: string;
 	error?: string;
 	wasCreated?: boolean; // True if doc didn't exist and was created instead
+	uploaded?: boolean; // True if doc was uploaded to server
+	uploadError?: string; // Error message if upload failed
 };
 
 type DocDetailLevel = 'brief' | 'standard' | 'comprehensive';
@@ -110,10 +113,24 @@ export const updateMarkdownForFile = async (
 			// Write the updated markdown file
 			await writeFile(outputPath, markdownContent, 'utf-8');
 
+			// Try to upload the document to the server
+			let uploaded = false;
+			let uploadError: string | undefined;
+			
+			if (await canUploadDocuments()) {
+				const uploadResult = await uploadDocument(outputPath, 'guide');
+				uploaded = uploadResult.success;
+				if (!uploadResult.success) {
+					uploadError = uploadResult.error;
+				}
+			}
+
 			return {
 				success: true,
 				outputPath,
 				wasCreated: false,
+				uploaded,
+				uploadError,
 			};
 		} else {
 			// Documentation doesn't exist, create it fresh
@@ -146,10 +163,24 @@ export const updateMarkdownForFile = async (
 			// Write the new markdown file
 			await writeFile(outputPath, markdownContent, 'utf-8');
 
+			// Try to upload the document to the server
+			let uploaded = false;
+			let uploadError: string | undefined;
+			
+			if (await canUploadDocuments()) {
+				const uploadResult = await uploadDocument(outputPath, 'guide');
+				uploaded = uploadResult.success;
+				if (!uploadResult.success) {
+					uploadError = uploadResult.error;
+				}
+			}
+
 			return {
 				success: true,
 				outputPath,
 				wasCreated: true,
+				uploaded,
+				uploadError,
 			};
 		}
 	} catch (error) {

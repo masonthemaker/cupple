@@ -8,4 +8,6 @@ export {checkForUpdates} from './versionCheck.js';
 export type {VersionCheckResult} from './versionCheck.js';
 export {loadGlobalConfig, saveGlobalConfig, getAccessToken, getProfileId, clearAuth} from './globalConfig.js';
 export type {GlobalConfig} from './globalConfig.js';
+export {uploadDocument, canUploadDocuments} from './docUploader.js';
+export type {UploadResult} from './docUploader.js';
 
