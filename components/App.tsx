@@ -39,6 +39,7 @@ export const App: React.FC = () => {
 	const [showInit, setShowInit] = useState(false);
 	const [browsePairedPort, setBrowsePairedPort] = useState<number | null>(null);
 	const [pushToPairedPort, setPushToPairedPort] = useState<number | null>(null);
+	const [renderKey, setRenderKey] = useState(0);
 	const [, forceUpdate] = useState({});
 	const [updateAvailable, setUpdateAvailable] = useState(false);
 	const [latestVersion, setLatestVersion] = useState<string | undefined>();
@@ -204,23 +205,52 @@ export const App: React.FC = () => {
 					extensionConfigs,
 				},
 				async (result) => {
-					// Handle autodoc results - add to history
+					// Handle autodoc completion - add to history
 					const currentHistory = await loadHistory();
-					const item: HistoryItem = result.success
-						? {
-								message: `🤖 Auto-generated docs for `,
-								color: '#a855f7',
-								filename: basename(result.filePath),
-								timestamp: Date.now(),
-							}
-						: {
-								message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
-								color: '#ef4444',
-								timestamp: Date.now(),
-							};
+					let item: HistoryItem;
 					
-					await saveHistory([...currentHistory, item]);
-					setHistory(await loadHistory());
+					if (result.success) {
+						let message = `✅ Documentation generated for `;
+						
+						// Add upload status to message
+						if (result.uploaded) {
+							message = `✅ Documentation generated and uploaded for `;
+						} else if (result.uploadError && !result.uploadError.includes('No access token')) {
+							// Only show upload error if it's not just missing credentials
+							message = `✅ Documentation generated (upload failed) for `;
+						}
+						
+						item = {
+							message,
+							color: '#22c55e',
+							filename: basename(result.filePath),
+							timestamp: Date.now(),
+						};
+					} else {
+						item = {
+							message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
+							color: '#ef4444',
+							timestamp: Date.now(),
+						};
+					}
+					
+					const newHistory = [...currentHistory, item];
+					await saveHistory(newHistory);
+					setHistory(newHistory);
+				},
+				async (filePath) => {
+					// Handle generation start - add to history
+					const currentHistory = await loadHistory();
+					const item: HistoryItem = {
+						message: `🤖 Generating documentation for `,
+						color: '#a855f7',
+						filename: basename(filePath),
+						timestamp: Date.now(),
+					};
+					
+					const newHistory = [...currentHistory, item];
+					await saveHistory(newHistory);
+					setHistory(newHistory);
 				}
 			);
 			// Create the callback ONCE
@@ -452,7 +482,10 @@ export const App: React.FC = () => {
 	if (showHelp) {
 		return (
 			<HelpScreen
-				onBack={() => setShowHelp(false)}
+				onBack={() => {
+					setShowHelp(false);
+					setRenderKey(prev => prev + 1);
+				}}
 				serverUrl={serverInfo?.url}
 			/>
 		);

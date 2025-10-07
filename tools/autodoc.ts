@@ -31,14 +31,18 @@ export type AutodocResult = {
 	success: boolean;
 	outputPath?: string;
 	error?: string;
+	uploaded?: boolean; // True if doc was uploaded to server
+	uploadError?: string; // Error message if upload failed
 };
 
 export type AutodocCallback = (result: AutodocResult) => void;
+export type AutodocStartCallback = (filePath: string) => void;
 
 export class AutodocController {
 	private config: AutodocConfig;
 	private apiKey: string;
 	private callback: AutodocCallback;
+	private onStartCallback?: AutodocStartCallback;
 	// Track cumulative changes per file
 	private fileChanges: Map<string, number> = new Map();
 	// Track which files have been documented
@@ -58,10 +62,12 @@ export class AutodocController {
 		apiKey: string,
 		config: AutodocConfig,
 		callback: AutodocCallback,
+		onStartCallback?: AutodocStartCallback,
 	) {
 		this.apiKey = apiKey;
 		this.config = config;
 		this.callback = callback;
+		this.onStartCallback = onStartCallback;
 		this.cooldownMs = config.cooldownMs || 30000; // Default 30 seconds
 		this.debounceMs = config.debounceMs || 20000; // Default 20 seconds
 		
@@ -186,6 +192,11 @@ export class AutodocController {
 		filePath: string,
 		linesChanged: number,
 	): Promise<void> {
+		// Notify that generation is starting
+		if (this.onStartCallback) {
+			this.onStartCallback(filePath);
+		}
+
 		try {
 			const detailLevel = this.getDetailLevelForFile(filePath);
 			const result = await updateMarkdownForFile(
@@ -202,6 +213,8 @@ export class AutodocController {
 					filePath,
 					success: true,
 					outputPath: result.outputPath,
+					uploaded: result.uploaded,
+					uploadError: result.uploadError,
 				});
 			} else {
 				this.callback({

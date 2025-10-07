@@ -3,7 +3,12 @@ import React from 'react';
 import {render} from 'ink';
 import {App} from './components/index.js';
 
-// Clear the terminal before starting
-console.clear();
+// Use stdin/stdout with proper TTY handling
+const {stdin, stdout} = process;
 
-render(<App />);
+render(<App />, {
+	stdin,
+	stdout,
+	exitOnCtrlC: true,
+	patchConsole: false,
+});

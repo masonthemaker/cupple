@@ -6,4 +6,10 @@ export {loadHistory, saveHistory, addHistoryItem, clearHistory} from './history.
 export type {HistoryItem} from './history.js';
 export {checkForUpdates} from './versionCheck.js';
 export type {VersionCheckResult} from './versionCheck.js';
+export {loadGlobalConfig, saveGlobalConfig, getAccessToken, getProfileId, clearAuth} from './globalConfig.js';
+export type {GlobalConfig} from './globalConfig.js';
+export {uploadDocument, canUploadDocuments} from './docUploader.js';
+export type {UploadResult} from './docUploader.js';
+export {getProjectMetadata, getProjectIdentifier, getCachedProjectMetadata} from './projectMetadata.js';
+export type {ProjectMetadata} from './projectMetadata.js';
 
