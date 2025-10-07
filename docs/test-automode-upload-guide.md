@@ -3,7 +3,7 @@ Utility library for a simple e‑commerce shopping‑cart system.
 All helpers are **pure** (they never mutate their arguments) and return a brand‑new `ShoppingCart` or related value.  
 Timestamps are generated with `new Date()` at the moment a function is called.
 
----
+---  
 
 ## Core Types & Interfaces  
 
@@ -71,7 +71,7 @@ export interface OrderSummary {
 }
 ```
 
----
+---  
 
 ## Primary Functions  
 
@@ -79,10 +79,11 @@ export interface OrderSummary {
 ```ts
 export const createCart = (userId: string): ShoppingCart;
 ```
-*Creates a brand‑new empty cart* for the given `userId`.  
+*Creates a brand‑new empty cart* for the given `userId`.
+
 - Generates a unique `id` via `generateCartId`.  
-- Sets `createdAt` and `updatedAt` to the current time.  
-- Starts with an empty `items` array and no coupon.
+- Sets `createdAt` and `updatedAt` to the current time (`new Date()`).  
+- Starts with an empty `items` array and **no** coupon data.
 
 ---
 
@@ -96,7 +97,7 @@ Returns a unique identifier of the form
 cart_<timestamp>_<randomString>
 ```  
 
-where `<timestamp>` is `Date.now()` and `<randomString>` is a 7‑character base‑36 substring.
+where `<timestamp>` is `Date.now()` and `<randomString>` is a **7‑character** base‑36 substring (`Math.random().toString(36).substring(2, 9)`).
 
 ---
 
@@ -110,8 +111,8 @@ export const addToCart = (
 ```
 Adds `quantity` of `productId` to `cart`.
 
-- If an **active** item for the same product already exists, its `quantity` is increased and its `updatedAt` refreshed.  
-- Otherwise a new `CartItem` with status `'active'` is appended.  
+- If an **active** item for the same product already exists, its `quantity` is **increased** by the supplied amount and its `updatedAt` refreshed.  
+- Otherwise a new `CartItem` with status `'active'` is appended (with fresh `addedAt`/`updatedAt`).  
 - Returns a **new** `ShoppingCart` with an updated `updatedAt`.
 
 ---
@@ -123,8 +124,8 @@ export const removeFromCart = (
   productId: string,
 ): ShoppingCart;
 ```
-Marks every matching item’s `status` as `'removed'` and updates `updatedAt`.  
-The item remains in the `items` array (soft‑delete).
+Marks **every** matching item’s `status` as `'removed'` and updates each item’s `updatedAt`.  
+The cart’s own `updatedAt` is also refreshed.
 
 ---
 
@@ -139,7 +140,8 @@ export const updateQuantity = (
 Sets a new `quantity` for the specified product.
 
 - If `quantity <= 0`, the call is delegated to `removeFromCart`.  
-- Otherwise the matching item’s `quantity` and `updatedAt` are updated.  
+- Otherwise the matching item (regardless of its current `status`) receives the new `quantity` and a refreshed `updatedAt`.  
+- The cart’s `updatedAt` is refreshed as well.
 
 ---
 
@@ -150,7 +152,8 @@ export const saveForLater = (
   productId: string,
 ): ShoppingCart;
 ```
-Changes the `status` of the matching item to `'saved_for_later'` and refreshes `updatedAt`.
+Changes the `status` of **all** matching items to `'saved_for_later'` and refreshes their `updatedAt`.  
+Cart `updatedAt` is also refreshed.
 
 ---
 
@@ -161,7 +164,7 @@ export const moveToCart = (
   productId: string,
 ): ShoppingCart;
 ```
-Moves an item from `'saved_for_later'` back to `'active'` and updates timestamps.
+Moves **all** matching items from `'saved_for_later'` back to `'active'`, updating timestamps on each item and on the cart.
 
 ---
 
@@ -193,6 +196,7 @@ Computes the subtotal (in cents) of **active** items:
 1. Looks up each active `productId` in the supplied `products` catalog.  
 2. Multiplies the product’s `price` by the item’s `quantity`.  
 3. Sums the results.  
+
 If a product cannot be found, it contributes `0` to the total.
 
 ---
@@ -227,7 +231,7 @@ export const applyCoupon = (
 ```
 Attaches a coupon to the cart:
 
-- Sets `couponCode` and `discountAmount` (in cents).  
+- Sets `couponCode` and `discountAmount` (both stored in cents).  
 - Refreshes `updatedAt`.  
 
 No validation of the coupon is performed; the caller supplies the discount amount.
@@ -283,13 +287,13 @@ export const clearCart = (cart: ShoppingCart): ShoppingCart;
 ```
 Empties the cart by:
 
-- Setting every item’s `status` to `'removed'`.  
+- Setting **every** item’s `status` to `'removed'` and refreshing each `updatedAt`.  
 - Removing `couponCode` and `discountAmount`.  
-- Updating `updatedAt`.  
+- Updating the cart’s `updatedAt`.  
 
 The returned cart still contains the original `items` array (now all removed) to preserve history.
 
----
+---  
 
 ## Quick Usage Example
 ```ts
@@ -303,8 +307,24 @@ import {
 
 // Sample product catalog
 const catalog: Product[] = [
-  { id: 'p1', name: 'Headphones', description: '', price: 1999, category: 'electronics', stock: 12, sku: 'HD-001' },
-  { id: 'p2', name: 'T‑Shirt', description: '', price: 1500, category: 'clothing', stock: 30, sku: 'TS-101' },
+  {
+    id: 'p1',
+    name: 'Headphones',
+    description: '',
+    price: 1999,
+    category: 'electronics',
+    stock: 12,
+    sku: 'HD-001',
+  },
+  {
+    id: 'p2',
+    name: 'T‑Shirt',
+    description: '',
+    price: 1500,
+    category: 'clothing',
+    stock: 30,
+    sku: 'TS-101',
+  },
 ];
 
 // 1️⃣ Create an empty cart for a user

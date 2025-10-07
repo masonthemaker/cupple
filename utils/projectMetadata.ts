@@ -20,7 +20,7 @@ export type ProjectMetadata = {
  */
 const getGitRemoteUrl = async (): Promise<string | undefined> => {
 	try {
-		const {stdout} = await execAsync('git remote get-url origin 2>/dev/null');
+		const {stdout} = await execAsync('git remote get-url origin');
 		return stdout.trim();
 	} catch {
 		return undefined;
@@ -32,7 +32,7 @@ const getGitRemoteUrl = async (): Promise<string | undefined> => {
  */
 const getGitBranch = async (): Promise<string | undefined> => {
 	try {
-		const {stdout} = await execAsync('git rev-parse --abbrev-ref HEAD 2>/dev/null');
+		const {stdout} = await execAsync('git rev-parse --abbrev-ref HEAD');
 		return stdout.trim();
 	} catch {
 		return undefined;
