@@ -25,7 +25,13 @@ const getUpdateSystemPrompt = (detailLevel: DocDetailLevel): string => {
 		'5. If a prop/feature is declared AND used in the render logic, it IS functional. Document it as such.\n' +
 		'6. Document NEW features in detail with their actual implementation, not as placeholders.\n' +
 		'7. Keep the same structure and tone as the existing documentation.\n' +
-		'8. Be precise and accurate - your documentation must match what the code actually does.';
+		'8. Be precise and accurate - your documentation must match what the code actually does.\n\n' +
+		'FORMATTING RULES:\n' +
+		'- DO NOT use markdown tables - they render poorly\n' +
+		'- Use bullet lists, numbered lists, and clear headings instead\n' +
+		'- Use code blocks with proper syntax highlighting\n' +
+		'- Use bold for emphasis, not tables\n' +
+		'- Keep line length reasonable for readability';
 	
 	if (detailLevel === 'brief') {
 		return `You are an expert at updating software documentation. Update the markdown to reflect code changes. ${criticalRules}\n\nKEEP IT CONCISE:\n- Brief descriptions only\n- Document only key changes\n- Minimal examples\n- Remove outdated sections`;
@@ -42,16 +48,23 @@ const getUpdateSystemPrompt = (detailLevel: DocDetailLevel): string => {
 const getCreateSystemPrompt = (detailLevel: DocDetailLevel): string => {
 	const basePrompt = 'You are an expert software documentation generator that only outputs in markdown.';
 	
+	const formattingRules = '\n\nFORMATTING RULES:\n' +
+		'- DO NOT use markdown tables - they render poorly\n' +
+		'- Use bullet lists, numbered lists, and clear headings instead\n' +
+		'- Use code blocks with proper syntax highlighting\n' +
+		'- Use bold for emphasis, not tables\n' +
+		'- Keep line length reasonable for readability';
+	
 	if (detailLevel === 'brief') {
-		return `${basePrompt} Generate CONCISE documentation. Include:\n- Brief purpose (1-2 sentences)\n- Key types/interfaces with minimal descriptions\n- Main props/parameters (only required ones)\n- One basic usage example\n- Keep it short and scannable. Focus on essentials only.`;
+		return `${basePrompt} Generate CONCISE documentation. Include:\n- Brief purpose (1-2 sentences)\n- Key types/interfaces with minimal descriptions\n- Main props/parameters (only required ones)\n- One basic usage example\n- Keep it short and scannable. Focus on essentials only.${formattingRules}`;
 	}
 	
 	if (detailLevel === 'comprehensive') {
-		return `${basePrompt} Generate COMPREHENSIVE documentation. Include:\n- Detailed purpose and context\n- Complete structure breakdown\n- All types, interfaces, props with full descriptions\n- Multiple usage examples (basic, intermediate, advanced)\n- Edge cases and gotchas\n- Best practices and recommendations\n- Implementation details and reasoning\n- Related components/files`;
+		return `${basePrompt} Generate COMPREHENSIVE documentation. Include:\n- Detailed purpose and context\n- Complete structure breakdown\n- All types, interfaces, props with full descriptions\n- Multiple usage examples (basic, intermediate, advanced)\n- Edge cases and gotchas\n- Best practices and recommendations\n- Implementation details and reasoning\n- Related components/files${formattingRules}`;
 	}
 	
 	// Standard (default)
-	return `${basePrompt} Generate BALANCED documentation. Include:\n- Clear purpose statement\n- Key structure and components\n- Important types/props with descriptions\n- Practical usage examples\n- Notable gotchas or edge cases\n- Keep it informative but not overwhelming.`;
+	return `${basePrompt} Generate BALANCED documentation. Include:\n- Clear purpose statement\n- Key structure and components\n- Important types/props with descriptions\n- Practical usage examples\n- Notable gotchas or edge cases\n- Keep it informative but not overwhelming.${formattingRules}`;
 };
 
 export const updateMarkdownForFile = async (
@@ -61,6 +74,8 @@ export const updateMarkdownForFile = async (
 	userNotes?: string,
 ): Promise<UpdateMDResult> => {
 	try {
+		console.log(`[updateMD] Starting documentation for: ${filePath}`);
+		
 		// Read the file content
 		const fileContent = await readFile(filePath, 'utf-8');
 		const fileName = basename(filePath);

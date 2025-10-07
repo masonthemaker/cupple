@@ -78,6 +78,9 @@ export const uploadDocument = async (
 		// Step 5.5: Get project metadata
 		const projectMetadata = await getCachedProjectMetadata();
 
+		// Debug: Log upload attempt
+		console.log(`[docUploader] Uploading: ${fileName} for project: ${projectMetadata.projectName}`);
+
 		// Step 6: POST to /api/cli/upload
 		try {
 			const response = await fetch(`${apiUrl}/api/cli/upload`, {
