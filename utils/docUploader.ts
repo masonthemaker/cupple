@@ -1,6 +1,7 @@
 import {readFile} from 'fs/promises';
 import {basename} from 'path';
 import {getAccessToken, getProfileId} from './globalConfig.js';
+import {getCachedProjectMetadata} from './projectMetadata.js';
 import {config} from 'dotenv';
 
 // Load environment variables
@@ -74,6 +75,9 @@ export const uploadDocument = async (
 		const fileName = basename(filePath);
 		const title = fileName.replace(/\.(md|markdown)$/i, '').replace(/-/g, ' ');
 
+		// Step 5.5: Get project metadata
+		const projectMetadata = await getCachedProjectMetadata();
+
 		// Step 6: POST to /api/cli/upload
 		try {
 			const response = await fetch(`${apiUrl}/api/cli/upload`, {
@@ -87,6 +91,12 @@ export const uploadDocument = async (
 					file_name: fileName,
 					file_content: base64Content,
 					category,
+					// Project identification fields
+					project_name: projectMetadata.projectName,
+					git_url: projectMetadata.gitUrl,
+					git_repo: projectMetadata.gitRepo,
+					git_branch: projectMetadata.gitBranch,
+					project_path: projectMetadata.projectPath,
 				}),
 			});
 

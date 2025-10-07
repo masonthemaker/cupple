@@ -10,4 +10,6 @@ export {loadGlobalConfig, saveGlobalConfig, getAccessToken, getProfileId, clearA
 export type {GlobalConfig} from './globalConfig.js';
 export {uploadDocument, canUploadDocuments} from './docUploader.js';
 export type {UploadResult} from './docUploader.js';
+export {getProjectMetadata, getProjectIdentifier, getCachedProjectMetadata} from './projectMetadata.js';
+export type {ProjectMetadata} from './projectMetadata.js';
 
