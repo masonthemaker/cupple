@@ -63,11 +63,11 @@ export interface ShoppingCart {
 ### `OrderSummary`
 ```ts
 export interface OrderSummary {
-  subtotal: number;   // cents
-  tax: number;        // cents
-  shipping: number;   // cents
-  discount: number;   // cents
-  total: number;      // cents (never negative)
+  subtotal: number;
+  tax: number;
+  shipping: number;
+  discount: number;
+  total: number;
 }
 ```
 
@@ -79,10 +79,11 @@ export interface OrderSummary {
 ```ts
 export const createCart = (userId: string): ShoppingCart;
 ```
-*Creates a brand‑new empty cart* for the given `userId`.  
-- Generates a unique `id` via `generateCartId`.  
-- Sets `createdAt` and `updatedAt` to the current time.  
-- Starts with an empty `items` array and no coupon.
+Creates a brand‑new empty cart for the given `userId`.
+
+* Generates a unique `id` via `generateCartId`.  
+* Sets `createdAt` and `updatedAt` to the current time.  
+* Starts with an empty `items` array; `couponCode` and `discountAmount` are `undefined`.
 
 ---
 
@@ -96,7 +97,8 @@ Returns a unique identifier of the form
 cart_<timestamp>_<randomString>
 ```  
 
-where `<timestamp>` is `Date.now()` and `<randomString>` is a 7‑character base‑36 substring.
+* `<timestamp>` – `Date.now()` (milliseconds).  
+* `<randomString>` – a 7‑character base‑36 substring (`Math.random().toString(36).substring(2, 9)`).
 
 ---
 
@@ -110,9 +112,9 @@ export const addToCart = (
 ```
 Adds `quantity` of `productId` to `cart`.
 
-- If an **active** item for the same product already exists, its `quantity` is increased and its `updatedAt` refreshed.  
-- Otherwise a new `CartItem` with status `'active'` is appended.  
-- Returns a **new** `ShoppingCart` with an updated `updatedAt`.
+* If an **active** item for the same product already exists, its `quantity` is increased by the supplied amount and its `updatedAt` refreshed.  
+* Otherwise a new `CartItem` with status `'active'` is appended (both `addedAt` and `updatedAt` set to the current time).  
+* Returns a **new** `ShoppingCart` with an updated `updatedAt`.
 
 ---
 
@@ -123,8 +125,8 @@ export const removeFromCart = (
   productId: string,
 ): ShoppingCart;
 ```
-Marks every matching item’s `status` as `'removed'` and updates `updatedAt`.  
-The item remains in the `items` array (soft‑delete).
+Marks **every** matching item’s `status` as `'removed'` and updates its `updatedAt`.  
+The item stays in the `items` array (soft‑delete).
 
 ---
 
@@ -138,8 +140,8 @@ export const updateQuantity = (
 ```
 Sets a new `quantity` for the specified product.
 
-- If `quantity <= 0`, the call is delegated to `removeFromCart`.  
-- Otherwise the matching item’s `quantity` and `updatedAt` are updated.  
+* If `quantity <= 0`, the call is delegated to `removeFromCart`.  
+* Otherwise the matching item’s `quantity` and `updatedAt` are updated.
 
 ---
 
@@ -209,11 +211,11 @@ Applies a fixed **8.5 %** tax rate to `subtotal` and rounds to the nearest cen
 ```ts
 export const calculateShipping = (subtotal: number): number;
 ```
-Shipping cost rules (all values in cents):
+Shipping cost rules (values in cents):
 
-- `subtotal >= 5000` → **free** shipping (`0`).  
-- `2500 <= subtotal < 5000` → `$5` (`500`).  
-- `subtotal < 2500` → `$10` (`1000`).
+* `subtotal >= 5000` → **free** shipping (`0`).  
+* `2500 <= subtotal < 5000` → `$5` (`500`).  
+* `subtotal < 2500` → `$10` (`1000`).
 
 ---
 
@@ -227,8 +229,8 @@ export const applyCoupon = (
 ```
 Attaches a coupon to the cart:
 
-- Sets `couponCode` and `discountAmount` (in cents).  
-- Refreshes `updatedAt`.  
+* Sets `couponCode` and `discountAmount` (in cents).  
+* Refreshes `updatedAt`.  
 
 No validation of the coupon is performed; the caller supplies the discount amount.
 
@@ -262,8 +264,8 @@ export const validateStock = (
 ```
 Returns `true` only if **every active item** can be fulfilled:
 
-- Finds the matching product in the catalog.  
-- Checks `product.stock >= item.quantity`.  
+* Finds the matching product in the catalog.  
+* Checks `product.stock >= item.quantity`.  
 
 If any product is missing or insufficient, the function returns `false`.
 
@@ -281,13 +283,13 @@ Counts the total quantity of **active** items (e.g., 3 × “Shirt” + 2 
 ```ts
 export const clearCart = (cart: ShoppingCart): ShoppingCart;
 ```
-Empties the cart by:
+Empties the cart while preserving history:
 
-- Setting every item’s `status` to `'removed'`.  
-- Removing `couponCode` and `discountAmount`.  
-- Updating `updatedAt`.  
+* Sets every item’s `status` to `'removed'` and updates `updatedAt`.  
+* Removes `couponCode` and `discountAmount`.  
+* Returns a new `ShoppingCart` with an updated `updatedAt`.  
 
-The returned cart still contains the original `items` array (now all removed) to preserve history.
+The `items` array remains (now all removed) to keep a record of prior activity.
 
 ---
 
@@ -303,8 +305,24 @@ import {
 
 // Sample product catalog
 const catalog: Product[] = [
-  { id: 'p1', name: 'Headphones', description: '', price: 1999, category: 'electronics', stock: 12, sku: 'HD-001' },
-  { id: 'p2', name: 'T‑Shirt', description: '', price: 1500, category: 'clothing', stock: 30, sku: 'TS-101' },
+  {
+    id: 'p1',
+    name: 'Headphones',
+    description: '',
+    price: 1999,
+    category: 'electronics',
+    stock: 12,
+    sku: 'HD-001',
+  },
+  {
+    id: 'p2',
+    name: 'T‑Shirt',
+    description: '',
+    price: 1500,
+    category: 'clothing',
+    stock: 30,
+    sku: 'TS-101',
+  },
 ];
 
 // 1️⃣ Create an empty cart for a user
