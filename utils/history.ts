@@ -11,6 +11,7 @@ export type HistoryItem = {
 	linesAdded?: number;
 	linesDeleted?: number;
 	timestamp?: number;
+	loading?: boolean; // Shows spinner when true
 };
 
 const getHistoryPath = (): string => {

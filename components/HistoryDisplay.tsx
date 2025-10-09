@@ -1,5 +1,6 @@
 import React from 'react';
 import {Text, Box} from 'ink';
+import Spinner from 'ink-spinner';
 
 type HistoryItem = {
 	message: string;
@@ -8,6 +9,7 @@ type HistoryItem = {
 	type?: 'file_created' | 'file_modified' | 'directory_created';
 	linesAdded?: number;
 	linesDeleted?: number;
+	loading?: boolean; // Shows spinner when true
 };
 
 interface HistoryDisplayProps {
@@ -33,17 +35,25 @@ export const HistoryDisplay: React.FC<HistoryDisplayProps> = ({history}) => {
 					);
 				}
 				
-				// Regular message rendering
-				return (
-					<Text key={i} color={item.color}>
-						{item.message}
-						{item.filename && (
-							<Text bold dimColor={false} underline>
-								{item.filename}
+			// Regular message rendering
+			return (
+				<Text key={i} color={item.color}>
+					{item.loading && (
+						<>
+							<Text color="#a855f7">
+								<Spinner type="dots" />
 							</Text>
-						)}
-					</Text>
-				);
+							{' '}
+						</>
+					)}
+					{item.message}
+					{item.filename && (
+						<Text bold dimColor={false} underline>
+							{item.filename}
+						</Text>
+					)}
+				</Text>
+			);
 			})}
 		</>
 	);

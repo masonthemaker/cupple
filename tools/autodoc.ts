@@ -41,6 +41,7 @@ export type AutodocStartCallback = (filePath: string) => void;
 export class AutodocController {
 	private config: AutodocConfig;
 	private apiKey: string;
+	private model: string;
 	private callback: AutodocCallback;
 	private onStartCallback?: AutodocStartCallback;
 	// Track cumulative changes per file
@@ -63,8 +64,10 @@ export class AutodocController {
 		config: AutodocConfig,
 		callback: AutodocCallback,
 		onStartCallback?: AutodocStartCallback,
+		model: string = 'openai/gpt-oss-20b',
 	) {
 		this.apiKey = apiKey;
+		this.model = model;
 		this.config = config;
 		this.callback = callback;
 		this.onStartCallback = onStartCallback;
@@ -203,6 +206,8 @@ export class AutodocController {
 				filePath,
 				this.apiKey,
 				detailLevel,
+				undefined, // userNotes
+				this.model,
 			);
 			
 			if (result.success) {

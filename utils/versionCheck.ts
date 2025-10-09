@@ -18,15 +18,15 @@ const getCurrentVersion = (): string => {
 		let packageJsonPath = join(__dirname, '..', 'package.json');
 		try {
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-			return packageJson.version || '1.0.0';
+			return packageJson.version || '2.0.0';
 		} catch {
 			// Try two levels up (for dist folder structure)
 			packageJsonPath = join(__dirname, '..', '..', 'package.json');
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-			return packageJson.version || '1.0.0';
+			return packageJson.version || '2.0.0';
 		}
 	} catch (error) {
-		return '1.0.0';
+		return '2.0.0';
 	}
 };
 
@@ -76,4 +76,3 @@ export const checkForUpdates = async (): Promise<VersionCheckResult> => {
 		};
 	}
 };
-

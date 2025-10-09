@@ -47,25 +47,25 @@ export const handleLoginCommand = async (
 			throw new Error(`Failed to create session: ${sessionResponse.statusText}`);
 		}
 
-		const sessionData: SessionResponse = await sessionResponse.json();
-		const {session_token, auth_url} = sessionData;
+	const sessionData: SessionResponse = await sessionResponse.json();
+	const {session_token, auth_url} = sessionData;
 
-		// Step 2: Open browser to auth URL
-		const openCommand = process.platform === 'win32' 
-			? `start ${auth_url}`
-			: process.platform === 'darwin'
-			? `open ${auth_url}`
-			: `xdg-open ${auth_url}`;
+	// Step 2: Open browser to auth URL (from backend)
+	const openCommand = process.platform === 'win32' 
+		? `start ${auth_url}`
+		: process.platform === 'darwin'
+		? `open ${auth_url}`
+		: `xdg-open ${auth_url}`;
 
-		exec(openCommand, (error) => {
-			if (error) {
-				console.error('Failed to open browser:', error);
-			}
-		});
+	exec(openCommand, (error) => {
+		if (error) {
+			console.error('Failed to open browser:', error);
+		}
+	});
 
-		console.log('\n🔐 Authentication Required');
-		console.log(`Opening browser to: ${auth_url}`);
-		console.log('Waiting for authentication...\n');
+	console.log('\n🔐 Authentication Required');
+	console.log(`Opening browser to: ${auth_url}`);
+	console.log('Waiting for authentication...\n');
 
 		// Step 3: Poll for authentication status
 		const startTime = Date.now();

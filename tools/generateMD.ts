@@ -36,6 +36,7 @@ export const generateMarkdownForFile = async (
 	filePath: string,
 	apiKey: string,
 	detailLevel: DocDetailLevel = 'standard',
+	model: string = 'openai/gpt-oss-20b',
 ): Promise<GenerateMDResult> => {
 	try {
 		// Read the file content
@@ -56,9 +57,9 @@ export const generateMarkdownForFile = async (
 					role: 'user',
 					content: `Generate markdown documentation for this file:\n\nFilename: ${fileName}\n\n\`\`\`\n${fileContent}\n\`\`\``,
 				},
-			],
-			model: 'openai/gpt-oss-120b',
-			temperature: 0.7,
+		],
+		model,
+		temperature: 0.7,
 			max_completion_tokens: 8192,
 			stream: false,
 		});

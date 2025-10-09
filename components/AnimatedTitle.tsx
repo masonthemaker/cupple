@@ -24,15 +24,15 @@ const getVersion = (): string => {
 		let packageJsonPath = join(__dirname, '..', 'package.json');
 		try {
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-			return packageJson.version || '1.0.0';
+			return packageJson.version || '2.0.0';
 		} catch {
 			// Try two levels up (for dist folder structure)
 			packageJsonPath = join(__dirname, '..', '..', 'package.json');
 			const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-			return packageJson.version || '1.0.0';
+			return packageJson.version || '2.0.0';
 		}
 	} catch (error) {
-		return '1.0.0';
+		return '2.0.0';
 	}
 };
 
@@ -92,16 +92,15 @@ export const AnimatedTitle: React.FC<AnimatedTitleProps> = ({
 						<Text color="#f59e0b"> • Update: v{latestVersion}</Text>
 					)}
 				</Box>
-				{/* Discord link */}
-				<Box marginTop={1}>
-					<Text dimColor>💬 Join our Discord: </Text>
-					<Text color="#5865F2">https://discord.gg/S7zRnuTk</Text>
-					<Text dimColor> (type </Text>
-					<Text color="#f9a8d4">/discord</Text>
-					<Text dimColor> to open)</Text>
-				</Box>
+			{/* Cloud alpha announcement */}
+			<Box marginTop={1}>
+				<Text>☁️  </Text>
+				<Text bold color="#60a5fa">Cloud Alpha Released! </Text>
+				<Text dimColor>Type </Text>
+				<Text color="#f9a8d4">/cloud</Text>
+				<Text dimColor> to sign up</Text>
+			</Box>
 			</Box>
 		</Box>
 	);
 };
-

@@ -79,13 +79,14 @@ export const handleRedocCommand = async (
 			? `🔄 Regenerating docs for ${filename} with your notes...`
 			: `🔄 Regenerating docs for ${filename}...`;
 
-		// Generate documentation with optional notes
-		const result = await updateMarkdownForFile(
-			fullPath,
-			context.settings.apiKey,
-			detailLevel,
-			notes || undefined,
-		);
+	// Generate documentation with optional notes
+	const result = await updateMarkdownForFile(
+		fullPath,
+		context.settings.apiKey,
+		detailLevel,
+		notes || undefined,
+		context.settings.model || 'openai/gpt-oss-20b',
+	);
 
 		if (result.success) {
 			const action = result.wasCreated ? 'Generated' : 'Updated';

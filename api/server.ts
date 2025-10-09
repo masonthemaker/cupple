@@ -33,7 +33,7 @@ export class CuppleServer {
 		this.app.get('/cupple/info', (req: Request, res: Response) => {
 			res.json({
 				app: 'cupple',
-				version: '1.0.0',
+				version: '2.0.0',
 				port: this.port,
 				projectPath: process.cwd(),
 			});
@@ -396,4 +396,3 @@ export class CuppleServer {
 		}
 	}
 }
-

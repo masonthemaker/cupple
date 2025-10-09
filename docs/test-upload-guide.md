@@ -1,29 +1,55 @@
+```markdown
 ## test‑upload.ts – Overview  
 
 Utility module for validating user profiles and handling upload‑configuration checks (file size & MIME type) used by the automatic document‑upload feature.
 
----  
+---
 
 ### Types / Interfaces  
 
-| Type | Definition |
-|------|------------|
-| **UserProfile** | ```ts\n{ id: string; name: string; email: string; role: 'admin' | 'user' | 'guest'; createdAt: Date; }\n``` |
-| **UploadConfig** | ```ts\n{ maxFileSize: number; allowedTypes: string[]; autoUpload: boolean; }\n```<br>*`maxFileSize`* – bytes (default `10 * 1024 * 1024` ≈ 10 MB), *`allowedTypes`* – MIME strings, *`autoUpload`* – toggles automatic uploading. |
+- **`UserProfile`** – Represents a user.  
+  ```ts
+  {
+    id: string;
+    name: string;
+    email: string;
+    role: 'admin' | 'user' | 'guest';
+    createdAt: Date;
+  }
+  ```
 
----  
+- **`UploadConfig`** – Configuration for file uploads.  
+  ```ts
+  {
+    maxFileSize: number;   // bytes
+    allowedTypes: string[]; // MIME strings
+    autoUpload: boolean;   // toggles automatic uploading
+  }
+  ```
+
+---
 
 ### Exported Functions  
 
-| Function | Parameters | Returns | Brief Description |
-|----------|------------|---------|-------------------|
-| `validateUserProfile(profile: UserProfile)` | `profile` | `boolean` | Returns **true** when `id`, `name`, and `email` are present **and** `role` is one of `'admin'`, `'user'`, `'guest'`. |
-| `createDefaultUploadConfig()` | — | `UploadConfig` | Returns a config with **`maxFileSize: 10 * 1024 * 1024`** (≈ 10 MB), **`allowedTypes: ['image/jpeg','image/png','application/pdf']`**, and **`autoUpload: true`**. |
-| `formatDisplayName(profile: UserProfile)` | `profile` | `string` | Returns `"<name> (<role>)"`. |
-| `isFileSizeValid(fileSize: number, config: UploadConfig)` | `fileSize`, `config` | `boolean` | Returns **true** when `fileSize` ≤ `config.maxFileSize`. |
-| `isFileTypeAllowed(fileType: string, config: UploadConfig)` | `fileType`, `config` | `boolean` | Returns **true** when `config.allowedTypes` includes `fileType`. |
+- **`validateUserProfile(profile: UserProfile): boolean`**  
+  Checks that `id`, `name`, and `email` are truthy and that `role` is one of the allowed values.
 
----  
+- **`createDefaultUploadConfig(): UploadConfig`**  
+  Returns a config with  
+  - `maxFileSize: 10 MB` (`10 * 1024 * 1024` bytes)  
+  - `allowedTypes: ['image/jpeg', 'image/png', 'application/pdf']`  
+  - `autoUpload: true`
+
+- **`formatDisplayName(profile: UserProfile): string`**  
+  Returns `"<name> (<role>)"`.
+
+- **`isFileSizeValid(fileSize: number, config: UploadConfig): boolean`**  
+  Returns `true` when `fileSize` ≤ `config.maxFileSize`.
+
+- **`isFileTypeAllowed(fileType: string, config: UploadConfig): boolean`**  
+  Returns `true` when `config.allowedTypes` includes `fileType`.
+
+---
 
 ### Quick Usage Example  
 
@@ -51,7 +77,7 @@ if (!validateUserProfile(user)) {
 
 const config = createDefaultUploadConfig();
 
-const fileSize = 4_500_000;               // 4.5 MB
+const fileSize = 4_500_000; // 4.5 MB
 const fileType = 'image/png';
 
 if (isFileSizeValid(fileSize, config) && isFileTypeAllowed(fileType, config)) {
@@ -59,4 +85,5 @@ if (isFileSizeValid(fileSize, config) && isFileTypeAllowed(fileType, config)) {
 }
 ```
 
-*The snippet validates a profile, obtains the default upload configuration, checks a file against that configuration, and logs a formatted display name.*
+The snippet validates a user profile, obtains the default upload configuration, checks a file against that configuration, and logs a formatted display name.
+```

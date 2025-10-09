@@ -31,6 +31,7 @@ export type CuppleSettings = {
 	extensionConfigs?: ExtensionConfig[]; // Per-extension documentation configurations
 	pairedInstances?: PairedInstance[];
 	pendingPairingRequest?: PendingPairingRequest | null;
+	model?: string; // Model to use for documentation generation (default: 'openai/gpt-oss-20b')
 };
 
 const getSettingsPath = (): string => {

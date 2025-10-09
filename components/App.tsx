@@ -21,7 +21,7 @@ import {
 	checkForUpdates,
 } from '../utils/index.js';
 import type {CuppleSettings, HistoryItem} from '../utils/index.js';
-import {executeCommand, InitScreen} from '../commands/index.js';
+import {executeCommand, InitScreen, ModelScreen} from '../commands/index.js';
 import type {CommandContext} from '../commands/index.js';
 import {CuppleServer} from '../api/index.js';
 import type {ServerInfo} from '../api/index.js';
@@ -37,6 +37,7 @@ export const App: React.FC = () => {
 	const [showHelp, setShowHelp] = useState(false);
 	const [showFileSelector, setShowFileSelector] = useState(false);
 	const [showInit, setShowInit] = useState(false);
+	const [showModel, setShowModel] = useState(false);
 	const [browsePairedPort, setBrowsePairedPort] = useState<number | null>(null);
 	const [pushToPairedPort, setPushToPairedPort] = useState<number | null>(null);
 	const [renderKey, setRenderKey] = useState(0);
@@ -204,57 +205,65 @@ export const App: React.FC = () => {
 					generateOnCreate: false, // Don't generate immediately on create
 					extensionConfigs,
 				},
-				async (result) => {
-					// Handle autodoc completion - add to history
-					const currentHistory = await loadHistory();
-					let item: HistoryItem;
+			async (result) => {
+				// Handle autodoc completion - replace loading item with result
+				const currentHistory = await loadHistory();
+				
+				// Remove the loading item for this file
+				const filteredHistory = currentHistory.filter(
+					item => !(item.loading && item.filename === basename(result.filePath))
+				);
+				
+				let item: HistoryItem;
+				
+				if (result.success) {
+					let message = `✅ Documentation generated for `;
 					
-					if (result.success) {
-						let message = `✅ Documentation generated for `;
-						
-						// Add upload status to message
-						if (result.uploaded) {
-							message = `✅ Documentation generated and uploaded for `;
-						} else if (result.uploadError && !result.uploadError.includes('No access token')) {
-							// Only show upload error if it's not just missing credentials
-							message = `✅ Documentation generated (upload failed) for `;
-						}
-						
-						item = {
-							message,
-							color: '#22c55e',
-							filename: basename(result.filePath),
-							timestamp: Date.now(),
-						};
-					} else {
-						item = {
-							message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
-							color: '#ef4444',
-							timestamp: Date.now(),
-						};
+					// Add upload status to message
+					if (result.uploaded) {
+						message = `✅ Documentation generated and uploaded for `;
+					} else if (result.uploadError && !result.uploadError.includes('No access token')) {
+						// Only show upload error if it's not just missing credentials
+						message = `✅ Documentation generated (upload failed) for `;
 					}
 					
-					const newHistory = [...currentHistory, item];
-					await saveHistory(newHistory);
-					setHistory(newHistory);
-				},
-				async (filePath) => {
-					// Handle generation start - add to history
-					const currentHistory = await loadHistory();
-					const item: HistoryItem = {
-						message: `🤖 Generating documentation for `,
-						color: '#a855f7',
-						filename: basename(filePath),
+					item = {
+						message,
+						color: '#22c55e',
+						filename: basename(result.filePath),
 						timestamp: Date.now(),
 					};
-					
-					const newHistory = [...currentHistory, item];
-					await saveHistory(newHistory);
-					setHistory(newHistory);
+				} else {
+					item = {
+						message: `✗ Auto-doc failed for ${basename(result.filePath)}: ${result.error}`,
+						color: '#ef4444',
+						timestamp: Date.now(),
+					};
 				}
-			);
-			// Create the callback ONCE
-			autodocCallback = autodoc.createWatcherCallback();
+				
+				const newHistory = [...filteredHistory, item];
+				await saveHistory(newHistory);
+				setHistory(newHistory);
+			},
+			async (filePath) => {
+				// Handle generation start - add to history with spinner
+				const currentHistory = await loadHistory();
+				const item: HistoryItem = {
+					message: `Generating documentation for `,
+					color: '#a855f7',
+					filename: basename(filePath),
+					timestamp: Date.now(),
+					loading: true,
+				};
+				
+				const newHistory = [...currentHistory, item];
+				await saveHistory(newHistory);
+				setHistory(newHistory);
+			},
+			settings.model || 'openai/gpt-oss-20b',
+		);
+		// Create the callback ONCE
+		autodocCallback = autodoc.createWatcherCallback();
 		}
 
 		const watcher = new FileWatcher(process.cwd(), async event => {
@@ -406,9 +415,35 @@ export const App: React.FC = () => {
 				},
 			};
 
+		// Special handling for /redoc - show loading spinner
+		let loadingItemAdded = false;
+		if (trimmedValue.startsWith('/redoc')) {
+			const args = trimmedValue.split(' ').slice(1);
+			if (args.length > 0) {
+				const currentHistory = await loadHistory();
+				const loadingItem: HistoryItem = {
+					message: `Regenerating docs for `,
+					color: '#a855f7',
+					filename: basename(args[0]),
+					timestamp: Date.now(),
+					loading: true,
+				};
+				await saveHistory([...currentHistory, loadingItem]);
+				setHistory([...currentHistory, loadingItem]);
+				loadingItemAdded = true;
+			}
+		}
+
 		const result = await executeCommand(trimmedValue, context);
 
 		if (result) {
+			// Remove loading item if we added one
+			if (loadingItemAdded) {
+				const currentHistory = await loadHistory();
+				const filteredHistory = currentHistory.filter(item => !item.loading);
+				await saveHistory(filteredHistory);
+				setHistory(filteredHistory);
+			}
 			// Special handling for /clear - don't add to history after clearing
 			if (trimmedValue === '/clear') {
 				// History was already cleared in the command
@@ -424,12 +459,19 @@ export const App: React.FC = () => {
 				return;
 			}
 
-			// Special handling for /init - show init screen
-			if (result.message === 'init:show') {
-				setShowInit(true);
-				setQuery('');
-				return;
-			}
+		// Special handling for /init - show init screen
+		if (result.message === 'init:show') {
+			setShowInit(true);
+			setQuery('');
+			return;
+		}
+
+		// Special handling for /model - show model selection screen
+		if (result.message === 'model:show') {
+			setShowModel(true);
+			setQuery('');
+			return;
+		}
 
 			const currentHistory = await loadHistory();
 			const newHistory = [
@@ -521,22 +563,69 @@ export const App: React.FC = () => {
 					Living docs that sync across IDEs and agents
 				</Text>
 				<Text dimColor>─────────────────────────────────────────</Text>
-				<InitScreen
-					context={context}
-					onComplete={async result => {
-						setShowInit(false);
-						const currentHistory = await loadHistory();
-						await saveHistory([...currentHistory, {
-							message: result.message,
-							color: result.color,
-							timestamp: Date.now(),
-						}]);
-						setHistory(await loadHistory());
-					}}
-				/>
+			<InitScreen
+				context={context}
+				onComplete={async result => {
+					setShowInit(false);
+					const currentHistory = await loadHistory();
+					await saveHistory([...currentHistory, {
+						message: result.message,
+						color: result.color,
+						timestamp: Date.now(),
+					}]);
+					setHistory(await loadHistory());
+				}}
+			/>
+		</Box>
+	);
+}
+
+// Show model selection screen
+if (showModel) {
+	const context: CommandContext = {
+		settings: settings!,
+		serverInfo: serverInfo || undefined,
+		onSettingsUpdate: (newSettings: CuppleSettings) => {
+			setSettings(newSettings);
+		},
+		onClearHistory: async () => {
+			await saveHistory([]);
+			setHistory([]);
+		},
+		onExit: () => {
+			process.exit(0);
+		},
+	};
+
+	return (
+		<Box flexDirection="column">
+			<Box>
+				<AnimatedTitle title="Cupple" interval={200} />
+				{serverInfo && (
+					<Text color="#a855f7"> • {serverInfo.url}</Text>
+				)}
 			</Box>
-		);
-	}
+			<Text dimColor>─────────────────────────────────────────</Text>
+			<Text dimColor>
+				Living docs that sync across IDEs and agents
+			</Text>
+			<Text dimColor>─────────────────────────────────────────</Text>
+			<ModelScreen
+				context={context}
+				onComplete={async result => {
+					setShowModel(false);
+					const currentHistory = await loadHistory();
+					await saveHistory([...currentHistory, {
+						message: result.message,
+						color: result.color,
+						timestamp: Date.now(),
+					}]);
+					setHistory(await loadHistory());
+				}}
+			/>
+		</Box>
+	);
+}
 
 	// Main app
 	const hasApiKey = settings.apiKey && settings.apiKey.length > 0;
@@ -688,10 +777,21 @@ export const App: React.FC = () => {
 						await saveHistory(updatedHistory);
 						setHistory(updatedHistory);
 
-						const generationResults: HistoryItem[] = [];
+				const generationResults: HistoryItem[] = [];
 
-					// Generate or update markdown for each selected file
-					for (const filePath of files) {
+				// Generate or update markdown for each selected file
+				for (const filePath of files) {
+					// Add loading indicator for this file
+					const loadingItem: HistoryItem = {
+						message: `Generating docs for `,
+						color: '#a855f7',
+						filename: basename(filePath),
+						timestamp: Date.now(),
+						loading: true,
+					};
+					const historyWithLoading = [...history, newItem, ...generationResults, loadingItem];
+					await saveHistory(historyWithLoading);
+					setHistory(historyWithLoading);
 						// Determine detail level based on file extension
 						const match = filePath.match(/\.[^.]+$/);
 						const ext = match ? match[0] : '';
@@ -704,39 +804,51 @@ export const App: React.FC = () => {
 							detailLevel = settings!.docDetailLevel || 'standard';
 						}
 						
-						const result = await updateMarkdownForFile(
-							filePath,
-							settings!.apiKey!,
-							detailLevel,
-						);
+					const result = await updateMarkdownForFile(
+						filePath,
+						settings!.apiKey!,
+						detailLevel,
+						undefined, // userNotes
+						settings!.model || 'openai/gpt-oss-20b',
+					);
 
-							if (result.success) {
-								const action = result.wasCreated ? 'Generated' : 'Updated';
-								const successItem: HistoryItem = {
-									message: `✓ ${action} guide for `,
-									color: '#22c55e',
-									filename: basename(filePath),
-									timestamp: Date.now(),
-								};
-								generationResults.push(successItem);
-							} else {
-								const errorItem: HistoryItem = {
-									message: `✗ Failed to update guide for ${basename(filePath)}: ${result.error}`,
-									color: '#ef4444',
-									timestamp: Date.now(),
-								};
-								generationResults.push(errorItem);
+						if (result.success) {
+							const action = result.wasCreated ? 'Generated' : 'Updated';
+							let message = `✓ ${action} guide for `;
+							
+							// Add upload status
+							if (result.uploaded) {
+								message = `✓ ${action} & uploaded guide for `;
 							}
+							
+							const successItem: HistoryItem = {
+								message,
+								color: '#22c55e',
+								filename: basename(filePath),
+								timestamp: Date.now(),
+							};
+							generationResults.push(successItem);
+						} else {
+							const errorItem: HistoryItem = {
+								message: `✗ Failed to update guide for ${basename(filePath)}: ${result.error}`,
+								color: '#ef4444',
+								timestamp: Date.now(),
+							};
+							generationResults.push(errorItem);
 						}
+					}
 
-						// Clear file change history, keep only generation results
-						const currentHistory = await loadHistory();
-						const filteredHistory = currentHistory.filter(
-							item => item.type !== 'file_modified' && item.type !== 'file_created' && item.type !== 'directory_created'
-						);
-						const finalHistory = [...filteredHistory, ...generationResults];
-						await saveHistory(finalHistory);
-						setHistory(finalHistory);
+					// Clear file change history and loading items, keep only generation results
+					const currentHistory = await loadHistory();
+					const filteredHistory = currentHistory.filter(
+						item => item.type !== 'file_modified' && 
+						        item.type !== 'file_created' && 
+						        item.type !== 'directory_created' &&
+						        !item.loading // Remove all loading indicators
+					);
+					const finalHistory = [...filteredHistory, ...generationResults];
+					await saveHistory(finalHistory);
+					setHistory(finalHistory);
 					}}
 					onCancel={() => setShowFileSelector(false)}
 				/>

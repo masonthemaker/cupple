@@ -72,6 +72,7 @@ export const updateMarkdownForFile = async (
 	apiKey: string,
 	detailLevel: DocDetailLevel = 'standard',
 	userNotes?: string,
+	model: string = 'openai/gpt-oss-20b',
 ): Promise<UpdateMDResult> => {
 	try {
 		console.log(`[updateMD] Starting documentation for: ${filePath}`);
@@ -114,7 +115,7 @@ export const updateMarkdownForFile = async (
 						content: `Update this documentation based on the current code:\n\n## Existing Documentation:\n\`\`\`markdown\n${existingDoc}\n\`\`\`\n\n## Current Code:\n\nFilename: ${fileName}\n\n\`\`\`\n${fileContent}\n\`\`\`${userNotesSection}\n\nProvide the complete updated markdown documentation.`,
 					},
 				],
-				model: 'openai/gpt-oss-120b',
+				model,
 				temperature: 0.7,
 				max_completion_tokens: 8192,
 				stream: false,
@@ -164,7 +165,7 @@ export const updateMarkdownForFile = async (
 						content: `Generate markdown documentation for this file:\n\nFilename: ${fileName}\n\n\`\`\`\n${fileContent}\n\`\`\`${userNotesSection}`,
 					},
 				],
-				model: 'openai/gpt-oss-120b',
+				model,
 				temperature: 0.7,
 				max_completion_tokens: 8192,
 				stream: false,
